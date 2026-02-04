@@ -1,4 +1,4 @@
-# LinkedIT 🔗
+# LinkedIT
 
 Your **Second Brain for the Internet** - Save links, tag them, and find them instantly.
 
@@ -7,17 +7,17 @@ Your **Second Brain for the Internet** - Save links, tag them, and find them ins
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwindcss)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## ✨ Features
+## Features
 
-- **🔗 Auto-metadata extraction** - Thumbnails, titles, and descriptions pulled automatically
-- **🏷️ Smart tagging** - Organize with custom tags
-- **🔍 Instant search** - Find anything in seconds
-- **📺 YouTube integration** - Watch videos in-app with embedded player
-- **🖼️ Image lightbox** - View images in full-screen without leaving the app
-- **📱 Responsive design** - Works on desktop, tablet, and mobile
-- **🌙 Dark mode** - Beautiful dark theme by default
+- **Auto-metadata extraction** - Thumbnails, titles, and descriptions pulled automatically
+- **Smart tagging** - Organize with custom tags
+- **Instant search** - Find anything in seconds
+- **YouTube integration** - Watch videos in-app with embedded player
+- **Image lightbox** - View images in full-screen without leaving the app
+- **Responsive design** - Works on desktop, tablet, and mobile
+- **Dark mode** - Beautiful dark theme by default
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -49,7 +49,7 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000)
 
-## 🔧 Environment Variables
+## Environment Variables
 
 Create a `.env.local` file with your Firebase configuration:
 
@@ -63,7 +63,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
 - **Styling**: Tailwind CSS 4
@@ -73,7 +73,7 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 - **Icons**: Lucide React
 - **Deployment**: Vercel
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -87,7 +87,7 @@ src/
 └── types/            # TypeScript type definitions
 ```
 
-## 🚢 Deployment
+## Deployment
 
 This project is optimized for Vercel:
 
@@ -96,10 +96,10 @@ This project is optimized for Vercel:
 3. Add your environment variables
 4. Deploy!
 
-## 📄 License
+## License
 
 MIT License - feel free to use this project for personal or commercial purposes.
 
 ---
 
-Built with ❤️ for visual thinkers
+Built for visual thinkers
