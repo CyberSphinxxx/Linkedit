@@ -50,6 +50,7 @@ export default function TagInput({
                         <button
                             onClick={() => removeTag(tag)}
                             className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-primary/30 transition-colors"
+                            aria-label={`Remove tag ${tag}`}
                         >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
