@@ -93,14 +93,16 @@ export default function PreviewCard({
                 <div className="p-5">
                     {/* Site info */}
                     <div className="flex items-center gap-2 mb-3">
-                        <Image
-                            src={data.favicon}
-                            alt={data.siteName}
-                            width={20}
-                            height={20}
-                            className="rounded"
-                            unoptimized
-                        />
+                        {data.favicon && (
+                            <Image
+                                src={data.favicon}
+                                alt=""
+                                width={20}
+                                height={20}
+                                className="rounded"
+                                unoptimized
+                            />
+                        )}
                         <span className="text-sm text-foreground-muted">{data.siteName}</span>
                     </div>
 
