@@ -17,6 +17,8 @@ export interface Link {
   media_type: MediaType;
   is_favorite: boolean;
   created_at: Date;
+  note?: string;           // Personal note ("Why" field)
+  collection?: string;     // Collection ID
 }
 
 export interface CreateLinkInput {
