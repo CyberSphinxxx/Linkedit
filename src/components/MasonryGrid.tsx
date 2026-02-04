@@ -1,21 +1,25 @@
 'use client';
 
 import { ReactNode, useEffect, useState } from 'react';
+import { useSettings } from '@/context/SettingsContext';
 
 interface MasonryGridProps {
     children: ReactNode;
 }
 
 export default function MasonryGrid({ children }: MasonryGridProps) {
+    const { settings } = useSettings();
+    const maxColumns = settings.gridColumns;
     const [columns, setColumns] = useState(1);
 
     useEffect(() => {
         const updateColumns = () => {
             const width = window.innerWidth;
-            if (width >= 1280) setColumns(4);      // xl
-            else if (width >= 1024) setColumns(3); // lg
-            else if (width >= 640) setColumns(2);  // sm
-            else setColumns(1);                    // default
+            // Responsive columns, capped at user's maxColumns setting
+            if (width >= 1280) setColumns(Math.min(maxColumns, 4));      // xl
+            else if (width >= 1024) setColumns(Math.min(maxColumns, 3)); // lg
+            else if (width >= 640) setColumns(Math.min(maxColumns, 2));  // sm
+            else setColumns(1);                                          // mobile always 1
         };
 
         // Debounce resize handler to prevent excessive re-renders
@@ -31,7 +35,7 @@ export default function MasonryGrid({ children }: MasonryGridProps) {
             clearTimeout(timeoutId);
             window.removeEventListener('resize', debouncedUpdate);
         };
-    }, []);
+    }, [maxColumns]);
 
     // Distribute children into columns (Row-Major strategy)
     const columnWrapper: ReactNode[][] = Array.from({ length: columns }, () => []);
@@ -53,3 +57,4 @@ export default function MasonryGrid({ children }: MasonryGridProps) {
         </div>
     );
 }
+
