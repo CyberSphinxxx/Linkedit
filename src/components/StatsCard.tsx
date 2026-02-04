@@ -34,11 +34,13 @@ export default function StatsCard({ icon, label, value, color = 'primary', delay
             style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
             className={`
         relative overflow-hidden rounded-xl p-4
-        bg-gradient-to-br ${colorClasses[color]}
-        border backdrop-blur-sm
+        bg-surface
+        backdrop-blur-sm
         hover:scale-[1.02] transition-transform
       `}
         >
+            <div className={`absolute inset-0 opacity-10 ${iconColorClasses[color].replace('text-', 'bg-')}`} />
+            <div className={`absolute inset-0 border border-white/5 rounded-xl`} />
             <div className="flex items-center gap-3">
                 <div className={`text-2xl ${iconColorClasses[color]}`}>
                     {icon}
