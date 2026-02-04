@@ -24,6 +24,8 @@ interface LinksContextType {
     setSelectedTags: (tags: string[]) => void;
     selectedMediaType: string | null;
     setSelectedMediaType: (type: string | null) => void;
+    selectedCollection: string | null;
+    setSelectedCollection: (collection: string | null) => void;
     allTags: { name: string; count: number }[];
     addLink: (link: Omit<LinkType, '_id'>) => Promise<void>;
     updateLink: (id: string, updates: Partial<LinkType>) => Promise<void>;
@@ -43,6 +45,7 @@ export function LinksProvider({ children }: { children: ReactNode }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedMediaType, setSelectedMediaType] = useState<string | null>(null);
+    const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
 
     // Clear error
     const clearError = useCallback(() => setError(null), []);
@@ -122,14 +125,20 @@ export function LinksProvider({ children }: { children: ReactNode }) {
     }, [user]);
 
     // Toggle favorite - wrapped in useCallback
+    // Uses functional update to avoid stale closure on `links`
     const toggleFavorite = useCallback(async (id: string) => {
         if (!user) throw new Error('Must be logged in to toggle favorite');
 
-        const link = links.find((l) => l._id === id);
-        if (!link) return;
+        // Get current favorite status from state functionally
+        let currentIsFavorite = false;
+        setLinks((prev) => {
+            const link = prev.find((l) => l._id === id);
+            if (link) currentIsFavorite = link.is_favorite;
+            return prev; // Don't modify, just read
+        });
 
         try {
-            await firestoreService.toggleFavorite(user.uid, id, link.is_favorite);
+            await firestoreService.toggleFavorite(user.uid, id, currentIsFavorite);
             setLinks((prev) =>
                 prev.map((l) =>
                     l._id === id ? { ...l, is_favorite: !l.is_favorite } : l
@@ -140,7 +149,7 @@ export function LinksProvider({ children }: { children: ReactNode }) {
             console.error('Error toggling favorite:', err);
             throw new Error(message);
         }
-    }, [user, links]);
+    }, [user]); // Removed `links` dependency - no more stale closure
 
     // Filter links based on search, tag, and media type
     const filteredLinks = useMemo(() => {
@@ -166,9 +175,15 @@ export function LinksProvider({ children }: { children: ReactNode }) {
                 return false;
             }
 
+            // Collection filter
+            if (selectedCollection) {
+                const linkCollection = link.collection || 'default_0';
+                if (linkCollection !== selectedCollection) return false;
+            }
+
             return true;
         });
-    }, [links, searchQuery, selectedTags, selectedMediaType]);
+    }, [links, searchQuery, selectedTags, selectedMediaType, selectedCollection]);
 
     // Get all unique tags with counts
     const allTags = useMemo(() => {
@@ -195,6 +210,8 @@ export function LinksProvider({ children }: { children: ReactNode }) {
         setSelectedTags,
         selectedMediaType,
         setSelectedMediaType,
+        selectedCollection,
+        setSelectedCollection,
         allTags,
         addLink,
         updateLink,
@@ -210,6 +227,7 @@ export function LinksProvider({ children }: { children: ReactNode }) {
         searchQuery,
         selectedTags,
         selectedMediaType,
+        selectedCollection,
         allTags,
         addLink,
         updateLink,
