@@ -44,6 +44,7 @@ export default function SearchBar({
                 <button
                     onClick={() => onChange('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-elevated rounded-full transition-colors"
+                    aria-label="Clear search"
                 >
                     <svg
                         className="w-4 h-4 text-foreground-muted hover:text-foreground"
