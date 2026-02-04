@@ -7,11 +7,10 @@ import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 
 interface HeaderProps {
-    onAddClick?: () => void;
     searchBar?: React.ReactNode;
 }
 
-export default function Header({ onAddClick, searchBar }: HeaderProps) {
+export default function Header({ searchBar }: HeaderProps) {
     const { user, loading, signOut } = useAuth();
     const pathname = usePathname();
     const router = useRouter();
@@ -43,7 +42,10 @@ export default function Header({ onAddClick, searchBar }: HeaderProps) {
         else if (!isOnDashboard) router.push('/dashboard');
     };
 
-
+    const handleSettingsClick = () => {
+        setIsDropdownOpen(false);
+        router.push('/settings');
+    };
 
     const handleSignOut = async () => {
         setIsDropdownOpen(false);
@@ -88,18 +90,7 @@ export default function Header({ onAddClick, searchBar }: HeaderProps) {
 
                     </nav>
 
-                    {/* Add Button - Prominent CTA */}
-                    {isOnDashboard && onAddClick && (
-                        <button
-                            onClick={onAddClick}
-                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-background text-sm font-medium rounded-xl transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span>Add Link</span>
-                        </button>
-                    )}
+
 
                     {/* Divider */}
                     <div className="h-6 w-px bg-white/10 hidden sm:block"></div>
@@ -140,21 +131,11 @@ export default function Header({ onAddClick, searchBar }: HeaderProps) {
                                         </p>
                                     </div>
                                     <div className="p-2 space-y-1">
-                                        {/* Mobile Add Button in Dropdown */}
-                                        <button
-                                            onClick={onAddClick}
-                                            className="sm:hidden w-full px-3 py-2 text-left text-sm text-primary hover:bg-primary/10 rounded-xl transition-colors flex items-center gap-2.5 font-medium"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                            </svg>
-                                            Add New Link
-                                        </button>
+
 
                                         <button
-                                            onClick={() => { setIsDropdownOpen(false); }}
-                                            className="w-full px-3 py-2 text-left text-sm text-foreground-muted hover:text-foreground hover:bg-white/5 rounded-xl transition-colors flex items-center gap-2.5 cursor-not-allowed opacity-50"
-                                            title="Coming soon"
+                                            onClick={handleSettingsClick}
+                                            className="w-full px-3 py-2 text-left text-sm text-foreground-muted hover:text-foreground hover:bg-white/5 rounded-xl transition-colors flex items-center gap-2.5"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
