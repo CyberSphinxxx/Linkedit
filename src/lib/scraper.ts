@@ -34,6 +34,45 @@ export function getYouTubeThumbnail(videoId: string): string {
 }
 
 /**
+ * Fetch YouTube video metadata using oEmbed API
+ */
+async function fetchYouTubeMetadata(videoId: string, url: string): Promise<PreviewData> {
+    try {
+        const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+        const response = await fetch(oembedUrl, {
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (!response.ok) {
+            throw new Error('oEmbed request failed');
+        }
+
+        const data = await response.json();
+
+        return {
+            url,
+            title: data.title || 'YouTube Video',
+            description: `By ${data.author_name || 'Unknown'}`,
+            image: getYouTubeThumbnail(videoId),
+            siteName: 'YouTube',
+            favicon: 'https://www.youtube.com/favicon.ico',
+            mediaType: 'video',
+        };
+    } catch {
+        // Fallback if oEmbed fails
+        return {
+            url,
+            title: 'YouTube Video',
+            description: '',
+            image: getYouTubeThumbnail(videoId),
+            siteName: 'YouTube',
+            favicon: 'https://www.youtube.com/favicon.ico',
+            mediaType: 'video',
+        };
+    }
+}
+
+/**
  * Determine media type from URL
  */
 export function detectMediaType(url: string): 'video' | 'image' | 'article' {
@@ -145,19 +184,10 @@ export async function fetchMetadata(url: string): Promise<PreviewData> {
     const parsedUrl = new URL(url);
     const hostname = parsedUrl.hostname.replace('www.', '');
 
-    // Check for YouTube first
+    // Check for YouTube - use oEmbed API for reliable metadata
     const youtubeId = parseYouTubeId(url);
     if (youtubeId) {
-        // For YouTube, we can construct data without fetching
-        return {
-            url,
-            title: 'YouTube Video',
-            description: '',
-            image: getYouTubeThumbnail(youtubeId),
-            siteName: 'YouTube',
-            favicon: 'https://www.youtube.com/favicon.ico',
-            mediaType: 'video',
-        };
+        return fetchYouTubeMetadata(youtubeId, url);
     }
 
     try {
@@ -167,7 +197,7 @@ export async function fetchMetadata(url: string): Promise<PreviewData> {
         const response = await fetch(url, {
             signal: controller.signal,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; LinkEditBot/1.0)',
+                'User-Agent': 'Mozilla/5.0 (compatible; LinkeditBot/1.0)',
                 'Accept': 'text/html,application/xhtml+xml',
             },
         });
@@ -178,6 +208,34 @@ export async function fetchMetadata(url: string): Promise<PreviewData> {
             throw new Error(`HTTP ${response.status}`);
         }
 
+        const resolvedUrl = response.url;
+
+        // Check for Pinterest after redirect
+        // Matches pinterest.com/pin/ or *.pinterest.com/pin/
+        if (/(?:^|\.)pinterest\.com\/pin\//i.test(resolvedUrl)) {
+            try {
+                // Clean URL for oEmbed (remove query params like invite codes etc)
+                const cleanUrl = resolvedUrl.split('?')[0];
+                const oembedUrl = `https://www.pinterest.com/oembed.json?url=${encodeURIComponent(cleanUrl)}`;
+
+                const oembedRes = await fetch(oembedUrl);
+                if (oembedRes.ok) {
+                    const data = await oembedRes.json();
+                    return {
+                        url: resolvedUrl,
+                        title: data.title || 'Pinterest Pin',
+                        description: data.author_name ? `Saved by ${data.author_name}` : '',
+                        image: data.thumbnail_url || DEFAULT_PLACEHOLDER,
+                        siteName: 'Pinterest',
+                        favicon: 'https://www.pinterest.com/favicon.ico',
+                        mediaType: 'image',
+                    };
+                }
+            } catch (e) {
+                console.warn('Pinterest oEmbed failed, falling back to HTML parsing', e);
+            }
+        }
+
         const html = await response.text();
         const tags = parseMetaTags(html);
 
@@ -186,15 +244,15 @@ export async function fetchMetadata(url: string): Promise<PreviewData> {
         const favicon = tags['favicon'] ? resolveUrl(url, tags['favicon']) : `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
 
         return {
-            url,
+            url: resolvedUrl, // Use resolved URL
             title: tags['og:title'] || tags['twitter:title'] || tags['title'] || hostname,
             description: tags['og:description'] || tags['twitter:description'] || tags['description'] || '',
             image: resolvedImage,
             siteName: tags['og:site_name'] || hostname,
             favicon,
-            mediaType: detectMediaType(url),
+            mediaType: detectMediaType(resolvedUrl),
         };
-    } catch (error) {
+    } catch {
         // Return minimal data on error
         return {
             url,

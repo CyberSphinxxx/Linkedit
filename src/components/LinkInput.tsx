@@ -4,29 +4,28 @@ import { useState, useCallback, ClipboardEvent, ChangeEvent } from 'react';
 import { PreviewData } from '@/lib/scraper';
 import { Link as LinkType } from '@/types/link';
 import PreviewCard from './PreviewCard';
+import LoginPromptModal from './LoginPromptModal';
+import { useAuth } from '@/context/AuthContext';
+import { isValidUrl } from '@/lib/utils';
 
 interface LinkInputProps {
-    onSave?: (link: LinkType) => void;
+    onSave?: (link: Omit<LinkType, '_id'>) => void;
 }
 
 export default function LinkInput({ onSave }: LinkInputProps) {
+    const { user } = useAuth();
     const [url, setUrl] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [preview, setPreview] = useState<PreviewData | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    const isValidUrl = (string: string): boolean => {
-        try {
-            new URL(string);
-            return true;
-        } catch {
-            return false;
-        }
-    };
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     const fetchPreview = useCallback(async (inputUrl: string) => {
-        if (!isValidUrl(inputUrl)) return;
+        if (!isValidUrl(inputUrl)) {
+            setError('Please enter a valid URL');
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
@@ -46,7 +45,8 @@ export default function LinkInput({ onSave }: LinkInputProps) {
             const data = await response.json();
             setPreview(data);
         } catch (err) {
-            setError('Could not fetch preview. Please try again.');
+            const message = err instanceof Error ? err.message : 'Could not fetch preview';
+            setError(message);
             console.error('Preview error:', err);
         } finally {
             setIsLoading(false);
@@ -80,9 +80,13 @@ export default function LinkInput({ onSave }: LinkInputProps) {
     };
 
     const handleConfirm = (tags: string[]) => {
+        if (!user) {
+            setShowLoginPrompt(true);
+            return;
+        }
+
         if (preview) {
-            const newLink: LinkType = {
-                _id: Date.now().toString(),
+            const newLink: Omit<LinkType, '_id'> = {
                 original_url: preview.url,
                 metadata: {
                     title: preview.title,
@@ -183,6 +187,11 @@ export default function LinkInput({ onSave }: LinkInputProps) {
                 isLoading={isLoading}
                 onConfirm={handleConfirm}
                 onDismiss={handleDismiss}
+            />
+
+            <LoginPromptModal
+                isOpen={showLoginPrompt}
+                onClose={() => setShowLoginPrompt(false)}
             />
         </div>
     );

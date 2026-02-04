@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LinkEdit - Your Second Brain for the Internet",
+  title: "LinkedIT - Your Second Brain for the Internet",
   description: "Save links, scrape their soul, tag them, and find them instantly. A visual-first personal archive for reels, memes, and articles.",
 };
 
@@ -34,7 +34,9 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <LinksProvider>
-              <ToastProvider>{children}</ToastProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
             </LinksProvider>
           </AuthProvider>
         </ErrorBoundary>

@@ -20,12 +20,13 @@ interface LinksContextType {
     error: string | null;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    selectedTag: string | null;
-    setSelectedTag: (tag: string | null) => void;
+    selectedTags: string[];
+    setSelectedTags: (tags: string[]) => void;
     selectedMediaType: string | null;
     setSelectedMediaType: (type: string | null) => void;
     allTags: { name: string; count: number }[];
     addLink: (link: Omit<LinkType, '_id'>) => Promise<void>;
+    updateLink: (id: string, updates: Partial<LinkType>) => Promise<void>;
     removeLink: (id: string) => Promise<void>;
     toggleFavorite: (id: string) => Promise<void>;
     refreshLinks: () => Promise<void>;
@@ -40,7 +41,7 @@ export function LinksProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedTag, setSelectedTag] = useState<string | null>(null);
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedMediaType, setSelectedMediaType] = useState<string | null>(null);
 
     // Clear error
@@ -102,6 +103,24 @@ export function LinksProvider({ children }: { children: ReactNode }) {
         }
     }, [user]);
 
+    // Update a link - wrapped in useCallback
+    const updateLink = useCallback(async (id: string, updates: Partial<LinkType>) => {
+        if (!user) throw new Error('Must be logged in to update links');
+
+        try {
+            await firestoreService.updateLink(user.uid, id, updates);
+            setLinks((prev) =>
+                prev.map((link) =>
+                    link._id === id ? { ...link, ...updates } : link
+                )
+            );
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to update link';
+            console.error('Error updating link:', err);
+            throw new Error(message);
+        }
+    }, [user]);
+
     // Toggle favorite - wrapped in useCallback
     const toggleFavorite = useCallback(async (id: string) => {
         if (!user) throw new Error('Must be logged in to toggle favorite');
@@ -136,9 +155,10 @@ export function LinksProvider({ children }: { children: ReactNode }) {
                 if (!matchesTitle && !matchesTags) return false;
             }
 
-            // Tag filter
-            if (selectedTag && !link.tags.includes(selectedTag)) {
-                return false;
+            // Tag filter (OR match)
+            if (selectedTags.length > 0) {
+                const hasMatchingTag = link.tags.some((tag) => selectedTags.includes(tag));
+                if (!hasMatchingTag) return false;
             }
 
             // Media type filter
@@ -148,7 +168,7 @@ export function LinksProvider({ children }: { children: ReactNode }) {
 
             return true;
         });
-    }, [links, searchQuery, selectedTag, selectedMediaType]);
+    }, [links, searchQuery, selectedTags, selectedMediaType]);
 
     // Get all unique tags with counts
     const allTags = useMemo(() => {
@@ -171,12 +191,13 @@ export function LinksProvider({ children }: { children: ReactNode }) {
         error,
         searchQuery,
         setSearchQuery,
-        selectedTag,
-        setSelectedTag,
+        selectedTags,
+        setSelectedTags,
         selectedMediaType,
         setSelectedMediaType,
         allTags,
         addLink,
+        updateLink,
         removeLink,
         toggleFavorite,
         refreshLinks,
@@ -187,10 +208,11 @@ export function LinksProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         searchQuery,
-        selectedTag,
+        selectedTags,
         selectedMediaType,
         allTags,
         addLink,
+        updateLink,
         removeLink,
         toggleFavorite,
         refreshLinks,

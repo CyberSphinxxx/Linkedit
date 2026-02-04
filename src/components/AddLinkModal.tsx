@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect, ClipboardEvent, ChangeEvent } from 'react';
+import { useState, useCallback, useEffect, ClipboardEvent, KeyboardEvent } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { PreviewData } from '@/lib/scraper';
 import { Link as LinkType } from '@/types/link';
 import Image from 'next/image';
 import TagInput from './TagInput';
 import { isValidUrl } from '@/lib/utils';
+import { X, Link as LinkIcon, Loader2, Check, ExternalLink, Image as ImageIcon, Video, FileText } from 'lucide-react';
 
 interface AddLinkModalProps {
     isOpen: boolean;
@@ -31,24 +33,74 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
         }
     }, [isOpen]);
 
-    // Handle escape key
+    const handleSave = useCallback(() => {
+        if (preview) {
+            const newLink: Omit<LinkType, '_id'> = {
+                original_url: preview.url,
+                metadata: {
+                    title: preview.title,
+                    description: preview.description,
+                    thumbnail_image: preview.image,
+                    site_name: preview.siteName,
+                    favicon: preview.favicon,
+                },
+                tags,
+                media_type: preview.mediaType,
+                is_favorite: false,
+                created_at: new Date(),
+            };
+            onSave(newLink);
+            onClose();
+        }
+    }, [preview, tags, onSave, onClose]);
+
+    // Handle escape key and keyboard shortcuts
     useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
+        const handleKeyDown = (e: globalThis.KeyboardEvent) => {
             if (e.key === 'Escape' && !isLoading) onClose();
+
+            // Ctrl/Cmd + Enter to save
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && preview) {
+                e.preventDefault();
+                handleSave();
+            }
         };
+
         if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
+            document.addEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'hidden';
         }
         return () => {
-            document.removeEventListener('keydown', handleEscape);
+            document.removeEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen, onClose, isLoading]);
+    }, [isOpen, onClose, isLoading, preview, handleSave]);
 
     const fetchPreview = useCallback(async (inputUrl: string) => {
         if (!isValidUrl(inputUrl)) {
             setError('Please enter a valid URL');
+            return;
+        }
+
+        // Direct Image Detection
+        if (/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(inputUrl)) {
+            const urlObj = new URL(inputUrl);
+            const pathSegments = urlObj.pathname.split('/');
+            const filename = pathSegments[pathSegments.length - 1] || 'Image';
+
+            // Clean filename (remove extension and common separator chars)
+            const title = decodeURIComponent(filename.split('.')[0]).replace(/[-_]/g, ' ');
+            const capitalizedTitle = title.charAt(0).toUpperCase() + title.slice(1);
+
+            setPreview({
+                url: inputUrl,
+                title: capitalizedTitle,
+                description: 'Direct Image Link',
+                image: inputUrl,
+                siteName: urlObj.hostname,
+                favicon: `https://www.google.com/s2/favicons?domain=${urlObj.hostname}`,
+                mediaType: 'image'
+            });
             return;
         }
 
@@ -90,180 +142,195 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
         [fetchPreview]
     );
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setUrl(e.target.value);
-        if (preview) {
-            setPreview(null);
-            setError(null);
-        }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDownInput = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && url && isValidUrl(url) && !preview) {
             fetchPreview(url);
         }
     };
 
-    const handleSave = () => {
-        if (preview) {
-            const newLink: Omit<LinkType, '_id'> = {
-                original_url: preview.url,
-                metadata: {
-                    title: preview.title,
-                    description: preview.description,
-                    thumbnail_image: preview.image,
-                    site_name: preview.siteName,
-                    favicon: preview.favicon,
-                },
-                tags,
-                media_type: preview.mediaType,
-                is_favorite: false,
-                created_at: new Date(),
-            };
-            onSave(newLink);
-            onClose();
-        }
-    };
-
-    if (!isOpen) return null;
-
     return (
-        <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            onClick={() => !isLoading && onClose()}
-        >
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-md" />
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute inset-0 bg-background/60 backdrop-blur-md"
+                        onClick={() => !isLoading && onClose()}
+                    />
 
-            {/* Modal */}
-            <div
-                className="relative w-full max-w-2xl bg-surface/90 backdrop-blur-xl border border-surface-elevated rounded-2xl shadow-2xl overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-surface-elevated">
-                    <h2 className="text-lg font-semibold text-foreground">Add New Link</h2>
-                    <button
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="p-2 rounded-lg hover:bg-surface-elevated text-foreground-muted hover:text-foreground transition-colors disabled:opacity-50"
+                    {/* Modal */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        transition={{ duration: 0.3, type: "spring", bounce: 0, opacity: { duration: 0.2 } }}
+                        className="relative w-full max-w-xl bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/5"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-elevated">
+                            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                                <span className="p-1.5 rounded-lg bg-surface-elevated text-primary">
+                                    <LinkIcon className="w-4 h-4" />
+                                </span>
+                                Add New Link
+                            </h2>
+                            <button
+                                onClick={onClose}
+                                className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-elevated transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
 
-                {/* Content */}
-                <div className="p-5">
-                    {/* URL Input */}
-                    <div className="relative">
-                        <input
-                            type="url"
-                            value={url}
-                            onChange={handleChange}
-                            onPaste={handlePaste}
-                            onKeyDown={handleKeyDown}
-                            disabled={isLoading}
-                            placeholder="Paste a link to save it to your brain..."
-                            autoFocus
-                            className="w-full px-4 py-3 rounded-xl bg-surface-elevated border border-surface-elevated text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary/50 transition-colors disabled:opacity-50"
-                        />
-
-                        {isLoading && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                <svg className="w-5 h-5 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                </svg>
-                            </div>
-                        )}
-                    </div>
-
-                    {error && (
-                        <p className="text-error text-sm mt-3">{error}</p>
-                    )}
-
-                    {/* Preview Card */}
-                    {preview && (
-                        <div className="mt-5 rounded-xl bg-surface-elevated overflow-hidden border border-surface-elevated">
-                            {/* Thumbnail */}
-                            <div className="relative w-full h-40 bg-background">
-                                <Image
-                                    src={preview.image}
-                                    alt={preview.title}
-                                    fill
-                                    className="object-cover"
-                                    unoptimized
-                                />
-                                <div className="absolute top-2 left-2">
-                                    <span
-                                        className={`
-                      px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase
-                      ${preview.mediaType === 'video' ? 'bg-error/90 text-white' : ''}
-                      ${preview.mediaType === 'image' ? 'bg-accent/90 text-white' : ''}
-                      ${preview.mediaType === 'article' ? 'bg-primary/90 text-background' : ''}
-                    `}
-                                    >
-                                        {preview.mediaType}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Info */}
-                            <div className="p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Image
-                                        src={preview.favicon}
-                                        alt={preview.siteName}
-                                        width={16}
-                                        height={16}
-                                        className="rounded-sm"
-                                        unoptimized
+                        <div className="p-6 space-y-6">
+                            {/* URL Input */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-foreground-muted ml-1">
+                                    Link URL
+                                </label>
+                                <div className="relative group">
+                                    <input
+                                        type="url"
+                                        value={url}
+                                        onChange={(e) => {
+                                            setUrl(e.target.value);
+                                            if (preview) {
+                                                setPreview(null);
+                                                setError(null);
+                                            }
+                                        }}
+                                        onPaste={handlePaste}
+                                        onKeyDown={handleKeyDownInput}
+                                        disabled={isLoading}
+                                        placeholder="https://..."
+                                        autoFocus
+                                        className="w-full px-4 py-3 rounded-xl bg-surface-elevated/50 border border-surface-elevated text-foreground placeholder:text-foreground-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:opacity-50"
                                     />
-                                    <span className="text-xs text-foreground-muted">{preview.siteName}</span>
+                                    {isLoading && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                                        </div>
+                                    )}
                                 </div>
-                                <h3 className="text-sm font-semibold text-foreground line-clamp-2">
-                                    {preview.title}
-                                </h3>
+                                {!error && !isLoading && !preview && (
+                                    <div className="flex items-center gap-4 text-xs text-foreground-muted px-1">
+                                        <span className="flex items-center gap-1.5">
+                                            <kbd className="px-1.5 py-0.5 rounded bg-surface-elevated border border-surface-elevated/50 font-mono text-[10px]">Ctrl+V</kbd>
+                                            to paste
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <kbd className="px-1.5 py-0.5 rounded bg-surface-elevated border border-surface-elevated/50 font-mono text-[10px]">Enter</kbd>
+                                            to fetch
+                                        </span>
+                                    </div>
+                                )}
+                                {error && (
+                                    <motion.p
+                                        initial={{ opacity: 0, y: -5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="text-sm text-error px-1"
+                                    >
+                                        {error}
+                                    </motion.p>
+                                )}
                             </div>
-                        </div>
-                    )}
 
-                    {/* Tags Input */}
-                    {preview && (
-                        <div className="mt-4">
-                            <TagInput
-                                tags={tags}
-                                onChange={setTags}
-                                placeholder="Add tags (e.g. meme, react, funny)"
-                            />
+                            {/* Preview Card */}
+                            <AnimatePresence mode="popLayout">
+                                {preview && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="space-y-4"
+                                    >
+                                        <div className="rounded-xl border border-surface-elevated overflow-hidden bg-surface-elevated/30">
+                                            <div className="flex sm:flex-row flex-col">
+                                                {/* Thumbnail */}
+                                                <div className="relative w-full sm:w-32 h-32 sm:h-auto flex-shrink-0 bg-surface-elevated">
+                                                    <Image
+                                                        src={preview.image}
+                                                        alt={preview.title}
+                                                        fill
+                                                        className="object-cover"
+                                                        unoptimized
+                                                    />
+                                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[10px] font-medium text-white uppercase tracking-wider flex items-center gap-1">
+                                                        {preview.mediaType === 'video' && <Video className="w-3 h-3" />}
+                                                        {preview.mediaType === 'image' && <ImageIcon className="w-3 h-3" />}
+                                                        {preview.mediaType === 'article' && <FileText className="w-3 h-3" />}
+                                                        {preview.mediaType === 'article' ? 'Link' : preview.mediaType}
+                                                    </div>
+                                                </div>
+
+                                                {/* Meta */}
+                                                <div className="p-4 flex flex-col justify-center min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1.5">
+                                                        {preview.favicon && (
+                                                            <Image
+                                                                src={preview.favicon}
+                                                                alt=""
+                                                                width={14}
+                                                                height={14}
+                                                                className="rounded-sm"
+                                                                unoptimized
+                                                            />
+                                                        )}
+                                                        <span className="text-xs text-foreground-muted truncate">
+                                                            {preview.siteName}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="text-sm font-semibold text-foreground line-clamp-1 mb-1">
+                                                        {preview.title}
+                                                    </h3>
+                                                    <p className="text-xs text-foreground-muted line-clamp-2">
+                                                        {preview.description}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Tags Input */}
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-foreground-muted ml-1">
+                                                Tags
+                                            </label>
+                                            <TagInput
+                                                tags={tags}
+                                                onChange={setTags}
+                                                placeholder="Add tags..."
+                                            />
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
-                    )}
+
+                        {/* Footer */}
+                        <div className="p-6 border-t border-surface-elevated flex items-center justify-end gap-3 bg-surface-elevated/10">
+                            <button
+                                onClick={onClose}
+                                className="px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-elevated rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={!preview || isLoading}
+                                className="px-6 py-2 text-sm font-medium bg-primary text-background rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center gap-2"
+                            >
+                                <Check className="w-4 h-4" />
+                                Save Link
+                            </button>
+                        </div>
+                    </motion.div>
                 </div>
-
-                {/* Footer */}
-                {preview && (
-                    <div className="flex gap-3 p-5 pt-0">
-                        <button
-                            onClick={handleSave}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent text-background font-medium text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                            Save Link
-                        </button>
-                        <button
-                            onClick={() => {
-                                setPreview(null);
-                                setUrl('');
-                                setTags([]);
-                            }}
-                            className="px-4 py-2.5 rounded-xl border border-surface-elevated text-foreground-muted font-medium text-sm hover:border-foreground-muted hover:text-foreground transition-colors"
-                        >
-                            Clear
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div>
+            )}
+        </AnimatePresence>
     );
 }

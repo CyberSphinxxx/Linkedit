@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -27,47 +28,78 @@ export default function LoginPage() {
         }
     };
 
+    const containerVariants: Variants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1, delayChildren: 0.5 }
+        }
+    };
+
+    const itemVariants: Variants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "circOut" } }
+    };
+
     return (
         <div className="min-h-screen grid lg:grid-cols-2">
             {/* Left side - Branding & Features */}
             <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-background via-surface to-background relative overflow-hidden">
                 {/* Animated background elements */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div
-                        className="absolute top-1/4 -left-20 w-80 h-80 rounded-full blur-3xl animate-pulse"
-                        style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)', opacity: 0.15 }}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 0.15, scale: 1 }}
+                        transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                        className="absolute top-1/4 -left-20 w-80 h-80 rounded-full blur-3xl"
+                        style={{ background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)' }}
                     />
-                    <div
-                        className="absolute bottom-1/4 right-0 w-96 h-96 rounded-full blur-3xl animate-pulse"
-                        style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%)', opacity: 0.1, animationDelay: '1s' }}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 0.1, scale: 1 }}
+                        transition={{ duration: 3, repeat: Infinity, repeatType: "reverse", delay: 1 }}
+                        className="absolute bottom-1/4 right-0 w-96 h-96 rounded-full blur-3xl"
+                        style={{ background: 'linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%)' }}
                     />
                     {/* Grid pattern */}
                     <div className="absolute inset-0 bg-grid opacity-30" />
                 </div>
 
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-3 relative z-10">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/25">
-                        <svg
-                            className="w-6 h-6 text-background"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                            />
-                        </svg>
-                    </div>
-                    <span className="text-2xl font-bold text-gradient">LinkEdit</span>
-                </Link>
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                    <Link href="/" className="flex items-center gap-3 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/25">
+                            <svg
+                                className="w-6 h-6 text-background"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                />
+                            </svg>
+                        </div>
+                        <span className="text-2xl font-bold text-gradient">LinkedIT</span>
+                    </Link>
+                </motion.div>
 
                 {/* Features showcase */}
-                <div className="relative z-10 space-y-8">
-                    <div>
+                <motion.div
+                    className="relative z-10 space-y-8"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
+                >
+                    <motion.div variants={itemVariants}>
                         <h2 className="text-4xl font-bold text-foreground mb-4 leading-tight">
                             Your Second Brain<br />
                             <span className="text-gradient">for the Internet</span>
@@ -75,7 +107,7 @@ export default function LoginPage() {
                         <p className="text-foreground-muted text-lg max-w-md">
                             Save links, tag them, and find them instantly. Never lose that amazing article again.
                         </p>
-                    </div>
+                    </motion.div>
 
                     {/* Feature cards */}
                     <div className="space-y-4">
@@ -84,26 +116,36 @@ export default function LoginPage() {
                             { icon: '🏷️', title: 'Smart tagging', desc: 'Organize with custom tags' },
                             { icon: '🔍', title: 'Instant search', desc: 'Find anything in seconds' },
                         ].map((feature, i) => (
-                            <div
+                            <motion.div
                                 key={i}
+                                variants={itemVariants}
                                 className="flex items-start gap-4 p-4 rounded-xl bg-surface/50 backdrop-blur-sm border border-surface-elevated hover:border-primary/30 transition-colors group"
+                                style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
                             >
                                 <span className="text-2xl group-hover:scale-110 transition-transform">{feature.icon}</span>
                                 <div>
                                     <h3 className="font-semibold text-foreground">{feature.title}</h3>
                                     <p className="text-sm text-foreground-muted">{feature.desc}</p>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Testimonial / Social proof */}
-                <div className="relative z-10">
-                    <p className="text-foreground-muted text-sm">
+                <motion.div
+                    className="relative z-10"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2 }}
+                >
+                    <p className="text-foreground-muted text-sm italic">
+                        "The simplest way to archive the web."
+                    </p>
+                    <p className="text-foreground-muted text-sm mt-1">
                         ✨ Free & Open Source
                     </p>
-                </div>
+                </motion.div>
             </div>
 
             {/* Right side - Login form */}
@@ -138,7 +180,7 @@ export default function LoginPage() {
                                 />
                             </svg>
                         </div>
-                        <span className="text-xl font-bold text-gradient">LinkEdit</span>
+                        <span className="text-xl font-bold text-gradient">LinkedIT</span>
                     </Link>
                 </div>
 

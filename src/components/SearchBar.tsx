@@ -39,8 +39,8 @@ export default function SearchBar({
                 className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface border border-surface-elevated text-sm text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary/50 transition-colors"
             />
 
-            {/* Clear button */}
-            {value && (
+            {/* Keyboard shortcut hint or Clear button */}
+            {value ? (
                 <button
                     onClick={() => onChange('')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-elevated rounded-full transition-colors"
@@ -59,6 +59,10 @@ export default function SearchBar({
                         />
                     </svg>
                 </button>
+            ) : (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:flex items-center gap-1">
+                    <span className="text-[10px] text-foreground-muted/50">Search</span>
+                </div>
             )}
         </div>
     );

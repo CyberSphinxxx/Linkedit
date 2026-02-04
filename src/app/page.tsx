@@ -6,6 +6,7 @@ import { useLinks } from '@/context/LinksContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const { addLink } = useLinks();
@@ -44,7 +45,13 @@ export default function Home() {
       {/* Main content */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-32">
         {/* Hero section */}
-        <div className="text-center mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center mb-12"
+          style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
+        >
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
             <span className="text-foreground">Your </span>
             <span className="text-gradient">Second Brain</span>
@@ -56,10 +63,18 @@ export default function Home() {
             <br />
             No more tab fatigue.
           </p>
-        </div>
+        </motion.div>
 
         {/* Link input */}
-        <LinkInput onSave={handleSave} />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full max-w-2xl"
+          style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
+        >
+          <LinkInput onSave={handleSave} />
+        </motion.div>
 
         {/* Feature hints */}
         <div className="flex flex-wrap justify-center gap-6 mt-16 text-sm text-foreground-muted">
