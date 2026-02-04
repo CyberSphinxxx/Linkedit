@@ -8,7 +8,9 @@ export interface PreviewData {
     mediaType: 'video' | 'image' | 'article';
 }
 
-const DEFAULT_PLACEHOLDER = 'https://placehold.co/1200x630/13131a/00f0ff?text=No+Preview';
+import { PLACEHOLDERS, API_ENDPOINTS, TIMEOUTS } from './constants';
+
+const DEFAULT_PLACEHOLDER = PLACEHOLDERS.IMAGE;
 
 /**
  * Extract YouTube video ID from various URL formats
@@ -30,7 +32,7 @@ export function parseYouTubeId(url: string): string | null {
  * Get high-resolution YouTube thumbnail
  */
 export function getYouTubeThumbnail(videoId: string): string {
-    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+    return API_ENDPOINTS.YOUTUBE_THUMBNAIL(videoId);
 }
 
 /**
@@ -38,9 +40,9 @@ export function getYouTubeThumbnail(videoId: string): string {
  */
 async function fetchYouTubeMetadata(videoId: string, url: string): Promise<PreviewData> {
     try {
-        const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+        const oembedUrl = API_ENDPOINTS.YOUTUBE_OEMBED(url);
         const response = await fetch(oembedUrl, {
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(TIMEOUTS.YOUTUBE_OEMBED)
         });
 
         if (!response.ok) {
@@ -55,7 +57,7 @@ async function fetchYouTubeMetadata(videoId: string, url: string): Promise<Previ
             description: `By ${data.author_name || 'Unknown'}`,
             image: getYouTubeThumbnail(videoId),
             siteName: 'YouTube',
-            favicon: 'https://www.youtube.com/favicon.ico',
+            favicon: API_ENDPOINTS.YOUTUBE_FAVICON,
             mediaType: 'video',
         };
     } catch {
@@ -66,7 +68,7 @@ async function fetchYouTubeMetadata(videoId: string, url: string): Promise<Previ
             description: '',
             image: getYouTubeThumbnail(videoId),
             siteName: 'YouTube',
-            favicon: 'https://www.youtube.com/favicon.ico',
+            favicon: API_ENDPOINTS.YOUTUBE_FAVICON,
             mediaType: 'video',
         };
     }
@@ -84,12 +86,38 @@ export function detectMediaType(url: string): 'video' | 'image' | 'article' {
         /instagram\.com\/reel/,
         /twitter\.com\/.*\/video/,
         /x\.com\/.*\/video/,
+        /twitch\.tv/,
+        /dailymotion\.com/,
     ];
 
     const imagePatterns = [
-        /\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i,
+        // Direct image URLs
+        /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)(\?.*)?$/i,
+        // Image hosting
         /imgur\.com/,
         /i\.redd\.it/,
+        /giphy\.com/,
+        /gfycat\.com/,
+        // Image-focused platforms
+        /pinterest\.(com|ca|co\.uk|de|fr|es|it|jp|kr|au|nz|at|ch|be|nl|se|no|dk|fi|pl|pt|ie|ru|in|mx|br|ar|cl|co)/,
+        /pin\.it/,
+        /unsplash\.com/,
+        /pexels\.com/,
+        /pixabay\.com/,
+        /flickr\.com/,
+        /500px\.com/,
+        // Art & Design platforms
+        /deviantart\.com/,
+        /artstation\.com/,
+        /dribbble\.com/,
+        /behance\.net/,
+        // Photo sharing
+        /instagram\.com(?!\/reel)/,  // Instagram posts (not reels)
+        /tumblr\.com.*\/(image|photo)/,
+        /flic\.kr/,
+        // Wallpapers
+        /wallhaven\.cc/,
+        /alphacoders\.com/,
     ];
 
     for (const pattern of videoPatterns) {
@@ -188,6 +216,32 @@ export async function fetchMetadata(url: string): Promise<PreviewData> {
     const youtubeId = parseYouTubeId(url);
     if (youtubeId) {
         return fetchYouTubeMetadata(youtubeId, url);
+    }
+
+    // Check for Pinterest (including pin.it short URLs) - use oEmbed API
+    if (/pinterest\.(com|ca|co\.uk|de|fr|es|it|jp|kr|au)/i.test(hostname) || hostname === 'pin.it') {
+        try {
+            const oembedUrl = `https://www.pinterest.com/oembed.json?url=${encodeURIComponent(url)}`;
+            const oembedRes = await fetch(oembedUrl, {
+                headers: { 'Accept': 'application/json' },
+                signal: AbortSignal.timeout(8000),
+            });
+
+            if (oembedRes.ok) {
+                const data = await oembedRes.json();
+                return {
+                    url,
+                    title: data.title || 'Pinterest Pin',
+                    description: data.author_name ? `Saved by ${data.author_name}` : 'Pinterest',
+                    image: data.thumbnail_url || DEFAULT_PLACEHOLDER,
+                    siteName: 'Pinterest',
+                    favicon: 'https://www.pinterest.com/favicon.ico',
+                    mediaType: 'image',
+                };
+            }
+        } catch (e) {
+            console.warn('Pinterest oEmbed failed:', e);
+        }
     }
 
     try {
