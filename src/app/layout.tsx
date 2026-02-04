@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { LinksProvider } from "@/context/LinksContext";
+import { CollectionsProvider } from "@/context/CollectionsContext";
+import { SettingsProvider } from "@/context/SettingsContext";
 import { ToastProvider } from "@/components/Toast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -32,13 +34,17 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ErrorBoundary>
-          <AuthProvider>
-            <LinksProvider>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
-            </LinksProvider>
-          </AuthProvider>
+          <SettingsProvider>
+            <AuthProvider>
+              <CollectionsProvider>
+                <LinksProvider>
+                  <ToastProvider>
+                    {children}
+                  </ToastProvider>
+                </LinksProvider>
+              </CollectionsProvider>
+            </AuthProvider>
+          </SettingsProvider>
         </ErrorBoundary>
       </body>
     </html>
