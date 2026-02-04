@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { parseYouTubeId } from '@/lib/scraper';
 import { getHostname, getFaviconUrl } from '@/lib/utils';
 import { useLinks } from '@/context/LinksContext';
+import { useSettings } from '@/context/SettingsContext';
 import { useToast } from '@/components/Toast';
 import { useState } from 'react';
 import EditLinkModal from './EditLinkModal';
@@ -16,6 +17,7 @@ interface LinkListItemProps {
 export default function LinkListItem({ link }: LinkListItemProps) {
     const [showEditModal, setShowEditModal] = useState(false);
     const { removeLink, toggleFavorite } = useLinks();
+    const { settings } = useSettings();
     const { showToast } = useToast();
 
     const youtubeId = parseYouTubeId(link.original_url);
@@ -23,10 +25,11 @@ export default function LinkListItem({ link }: LinkListItemProps) {
     const faviconSrc = link.metadata.favicon || getFaviconUrl(link.original_url);
 
     const handleClick = () => {
+        const target = settings.openLinksInNewTab ? '_blank' : '_self';
         if (youtubeId) {
-            window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank');
+            window.open(`https://www.youtube.com/watch?v=${youtubeId}`, target);
         } else {
-            window.open(link.original_url, '_blank');
+            window.open(link.original_url, target);
         }
     };
 
