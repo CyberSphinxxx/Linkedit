@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import MasonryGrid from '@/components/MasonryGrid';
@@ -11,14 +11,19 @@ import TagSidebar from '@/components/TagSidebar';
 import AddLinkModal from '@/components/AddLinkModal';
 import Header from '@/components/Header';
 import StatsCard from '@/components/StatsCard';
+import AddLinkArea from '@/components/AddLinkArea';
+import FloatingActionButton from '@/components/FloatingActionButton';
 import { FeatureErrorBoundary } from '@/components/ErrorBoundary';
 import { useLinks } from '@/context/LinksContext';
 import { useAuth } from '@/context/AuthContext';
+import { useSettings } from '@/context/SettingsContext';
 import { useToast } from '@/components/Toast';
+import { useKeyboardShortcut } from '@/hooks';
 import { Link as LinkType } from '@/types/link';
+import CollectionSwitcher from '@/components/CollectionSwitcher';
 import { Link2, Video, Image, Grid3X3, List, ArrowUpDown, Sparkles, Search, Hash } from 'lucide-react';
 
-type SortOption = 'newest' | 'oldest' | 'alphabetical';
+type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'favorites';
 type ViewMode = 'grid' | 'list';
 
 export default function Dashboard() {
@@ -40,12 +45,22 @@ export default function Dashboard() {
     } = useLinks();
 
     const { user, loading: authLoading } = useAuth();
+    const { settings } = useSettings();
     const router = useRouter();
     const { showToast } = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('newest');
-    const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView);
     const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+    // Open modal function
+    const openAddModal = useCallback(() => setIsModalOpen(true), []);
+
+    // Keyboard shortcut: Press 'N' to open add modal
+    useKeyboardShortcut({
+        key: 'n',
+        onTrigger: openAddModal,
+    });
 
     // Compute stats
     const stats = useMemo(() => {
@@ -59,6 +74,13 @@ export default function Dashboard() {
     const sortedLinks = useMemo(() => {
         const sorted = [...filteredLinks];
         switch (sortBy) {
+            case 'favorites':
+                // Favorites first, then by newest
+                return sorted.sort((a, b) => {
+                    if (a.is_favorite && !b.is_favorite) return -1;
+                    if (!a.is_favorite && b.is_favorite) return 1;
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                });
             case 'oldest':
                 return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
             case 'alphabetical':
@@ -109,10 +131,9 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-background bg-grid">
+        <div className={`min-h-screen bg-background ${settings.showGrid ? 'bg-grid' : ''}`}>
             {/* Header */}
             <Header
-                onAddClick={() => setIsModalOpen(true)}
                 searchBar={
                     <SearchBar
                         value={searchQuery}
@@ -124,7 +145,9 @@ export default function Dashboard() {
 
             {/* Main content with sidebar */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-                {/* Stats Row */}
+                {/* Add Link Hero Area */}
+                <AddLinkArea onClick={() => setIsModalOpen(true)} />
+
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <StatsCard
@@ -175,9 +198,12 @@ export default function Dashboard() {
                         <div className="space-y-4 mb-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h1 className="text-2xl font-bold text-foreground mb-1">
-                                        Your Collection
-                                    </h1>
+                                    <div className="flex items-center gap-4 mb-1">
+                                        <h1 className="text-2xl font-bold text-foreground">
+                                            Your Links
+                                        </h1>
+                                        <CollectionSwitcher />
+                                    </div>
                                     <p className="text-sm text-foreground-muted">
                                         {filteredLinks.length} link{filteredLinks.length !== 1 ? 's' : ''}
                                         {searchQuery && ` matching "${searchQuery}"`}
@@ -214,7 +240,7 @@ export default function Dashboard() {
                                             >
                                                 <ArrowUpDown className="w-3.5 h-3.5" />
                                                 <span className="hidden sm:inline">
-                                                    {sortBy === 'newest' ? 'Newest' : sortBy === 'oldest' ? 'Oldest' : 'A-Z'}
+                                                    {sortBy === 'newest' ? 'Newest' : sortBy === 'oldest' ? 'Oldest' : sortBy === 'favorites' ? 'Favorites' : 'A-Z'}
                                                 </span>
                                             </button>
                                             {showSortDropdown && (
@@ -222,6 +248,7 @@ export default function Dashboard() {
                                                     <div className="fixed inset-0 z-10" onClick={() => setShowSortDropdown(false)} />
                                                     <div className="absolute right-0 top-full mt-2 p-1 bg-surface border border-surface-elevated rounded-xl shadow-xl z-20 min-w-[140px] animate-in fade-in zoom-in-95 duration-200">
                                                         {[
+                                                            { value: 'favorites', label: 'Favorites First' },
                                                             { value: 'newest', label: 'Newest First' },
                                                             { value: 'oldest', label: 'Oldest First' },
                                                             { value: 'alphabetical', label: 'Alphabetical' },
@@ -396,13 +423,14 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Floating Action Button (Mobile) */}
-            <button
-                onClick={() => setIsModalOpen(true)}
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-primary to-accent text-background shadow-lg shadow-primary/30 flex items-center justify-center text-2xl md:hidden hover:scale-110 transition-transform z-50"
-            >
-                +
-            </button>
+            {/* Floating Action Button - Visible if enabled in settings */}
+            {settings.showFloatingAddButton && (
+                <FloatingActionButton
+                    onClick={openAddModal}
+                    label="Add Link"
+                    shortcutHint="N"
+                />
+            )}
 
             {/* Add Link Modal */}
             <AddLinkModal
