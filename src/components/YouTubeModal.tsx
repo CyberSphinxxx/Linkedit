@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useModal } from '@/hooks';
 
 interface YouTubeModalProps {
     videoId: string;
@@ -9,24 +11,18 @@ interface YouTubeModalProps {
 }
 
 export default function YouTubeModal({ videoId, isOpen, onClose }: YouTubeModalProps) {
-    const handleEscape = useCallback((e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-    }, [onClose]);
+    const [mounted, setMounted] = useState(false);
 
+    useModal({ isOpen, onClose });
+
+    // Ensure we're mounted on client before using portal
     useEffect(() => {
-        if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'hidden';
-        }
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'unset';
-        };
-    }, [isOpen, handleEscape]);
+        setMounted(true);
+    }, []);
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
-    return (
+    const content = (
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/90 backdrop-blur-md"
             onClick={onClose}
@@ -35,6 +31,7 @@ export default function YouTubeModal({ videoId, isOpen, onClose }: YouTubeModalP
             <button
                 onClick={onClose}
                 className="absolute top-4 right-4 p-2 rounded-full bg-surface-elevated hover:bg-surface text-foreground-muted hover:text-foreground transition-colors z-10"
+                aria-label="Close video"
             >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -56,4 +53,8 @@ export default function YouTubeModal({ videoId, isOpen, onClose }: YouTubeModalP
             </div>
         </div>
     );
+
+    // Use portal to render at document body to avoid scroll position issues
+    return createPortal(content, document.body);
 }
+
