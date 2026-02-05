@@ -176,7 +176,7 @@ function normalizeUrl(url: string): string {
     try {
         const parsed = new URL(url);
         // Remove trailing slash, www prefix, and query params for comparison
-        let normalized = parsed.hostname.replace(/^www\./, '') + parsed.pathname.replace(/\/$/, '');
+        const normalized = parsed.hostname.replace(/^www\./, '') + parsed.pathname.replace(/\/$/, '');
         return normalized.toLowerCase();
     } catch {
         return url.toLowerCase();
