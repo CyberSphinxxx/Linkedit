@@ -1,0 +1,21 @@
+/* Nord Theme */
+[data-theme="nord"] {
+    --background: #2e3440;
+    --surface: #3b4252;
+    --surface-elevated: #434c5e;
+
+    --primary: #88c0d0;
+    --primary-glow: rgba(136, 192, 208, 0.4);
+    --accent: #81a1c1;
+    --accent-glow: rgba(129, 161, 193, 0.4);
+
+    --foreground: #eceff4;
+    --foreground-muted: #d8dee9;
+
+    --success: #a3be8c;
+    --warning: #ebcb8b;
+    --error: #bf616a;
+
+    --grid-line: #88c0d0;
+    --grid-opacity: 0.05;
+}
