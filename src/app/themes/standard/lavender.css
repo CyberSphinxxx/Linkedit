@@ -1,0 +1,21 @@
+/* Lavender Theme - Soft purple */
+[data-theme="lavender"] {
+    --background: #130f18;
+    --surface: #1a1520;
+    --surface-elevated: #241d2e;
+
+    --primary: #a855f7;
+    --primary-glow: rgba(168, 85, 247, 0.4);
+    --accent: #c084fc;
+    --accent-glow: rgba(192, 132, 252, 0.4);
+
+    --foreground: #f3e8ff;
+    --foreground-muted: #8b7a99;
+
+    --success: #a78bfa;
+    --warning: #e879f9;
+    --error: #f472b6;
+
+    --grid-line: #a855f7;
+    --grid-opacity: 0.05;
+}
