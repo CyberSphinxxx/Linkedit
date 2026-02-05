@@ -1,0 +1,21 @@
+/* Mint Theme - Fresh Green */
+[data-theme="mint"] {
+    --background: #051810;
+    --surface: #0a251a;
+    --surface-elevated: #103324;
+
+    --primary: #6ee7b7;
+    --primary-glow: rgba(110, 231, 183, 0.4);
+    --accent: #34d399;
+    --accent-glow: rgba(52, 211, 153, 0.4);
+
+    --foreground: #ecfdf5;
+    --foreground-muted: #6b8f80;
+
+    --success: #6ee7b7;
+    --warning: #fde047;
+    --error: #fda4af;
+
+    --grid-line: #6ee7b7;
+    --grid-opacity: 0.05;
+}
