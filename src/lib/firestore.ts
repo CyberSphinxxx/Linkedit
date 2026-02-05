@@ -26,6 +26,7 @@ const docToLink = (doc: { id: string; data: () => Record<string, unknown> }): Li
         tags: data.tags as string[],
         media_type: data.media_type as 'video' | 'image' | 'article',
         is_favorite: data.is_favorite as boolean,
+        collection: data.collection as string | undefined,
         created_at: (data.created_at as Timestamp)?.toDate() || new Date(),
     };
 };
