@@ -1,0 +1,21 @@
+/* Coffee Theme */
+[data-theme="coffee"] {
+    --background: #201a18;
+    --surface: #29201d;
+    --surface-elevated: #362824;
+
+    --primary: #d4a373;
+    --primary-glow: rgba(212, 163, 115, 0.4);
+    --accent: #b08968;
+    --accent-glow: rgba(176, 137, 104, 0.4);
+
+    --foreground: #e6ccb2;
+    --foreground-muted: #9c846d;
+
+    --success: #606c38;
+    --warning: #dda15e;
+    --error: #bc6c25;
+
+    --grid-line: #d4a373;
+    --grid-opacity: 0.05;
+}
