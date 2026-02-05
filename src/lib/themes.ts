@@ -53,7 +53,7 @@ export const THEMES: ThemeConfig[] = [
         label: 'Light',
         description: 'Clean & bright',
         icon: React.createElement(Sun, { size: 20 }),
-        previewColor: '#0284c7',
+        previewColor: '#ffffff',
         colorScheme: 'light',
     },
     {
@@ -61,7 +61,7 @@ export const THEMES: ThemeConfig[] = [
         label: 'OLED Black',
         description: 'Pure black',
         icon: React.createElement(Circle, { size: 20, fill: 'currentColor' }),
-        previewColor: '#00f0ff',
+        previewColor: '#000000',
         colorScheme: 'dark',
     },
     {
