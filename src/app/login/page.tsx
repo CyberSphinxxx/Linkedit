@@ -4,7 +4,7 @@ import { motion, Variants } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function LoginPage() {
     const { signInWithGoogle, user, loading } = useAuth();
@@ -12,8 +12,13 @@ export default function LoginPage() {
     const [isSigningIn, setIsSigningIn] = useState(false);
 
     // Redirect if already logged in
+    useEffect(() => {
+        if (!loading && user) {
+            router.push('/dashboard');
+        }
+    }, [loading, user, router]);
+
     if (!loading && user) {
-        router.push('/dashboard');
         return null;
     }
 
