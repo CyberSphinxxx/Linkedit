@@ -76,10 +76,17 @@ export default function LinkCard({ link }: LinkCardProps) {
 
     const faviconSrc = link.metadata.favicon || getFaviconUrl(link.original_url);
 
+    const radiusClass = settings.cornerRadius === 'sharp' ? 'rounded-none' : 'rounded-2xl';
+    // Reduce motion: remove transition classes if enabled
+    const transitionClass = settings.reduceMotion ? '' : 'transition-all duration-300';
+    const hoverScaleClass = settings.reduceMotion ? '' : 'group-hover:scale-105';
+    const hoverOpacityClass = settings.reduceMotion ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100 transition-opacity duration-300';
+    const hoverTranslateClass = settings.reduceMotion ? 'translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0';
+
     return (
         <>
             <div
-                className={`group relative flex flex-col w-full rounded-2xl overflow-hidden bg-surface border border-surface-elevated shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 ${isDeleting ? 'opacity-50 pointer-events-none' : ''
+                className={`group theme-effect-card relative flex flex-col w-full ${radiusClass} overflow-hidden bg-surface border border-surface-elevated shadow-sm hover:shadow-xl hover:border-primary/20 ${transitionClass} ${isDeleting ? 'opacity-50 pointer-events-none' : ''
                     }`}
                 onMouseLeave={() => setShowMenu(false)}
             >
@@ -96,13 +103,13 @@ export default function LinkCard({ link }: LinkCardProps) {
                         src={thumbnailSrc}
                         alt={link.metadata.title || 'Link preview'}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className={`object-cover ${settings.reduceMotion ? '' : 'transition-transform duration-500'} ${hoverScaleClass}`}
                         unoptimized
                         onError={() => setImageError(true)}
                     />
 
                     {/* Hover Overlay (Darken) */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className={`absolute inset-0 bg-black/40 ${hoverOpacityClass}`} />
 
                     {/* Site Badge (Top Left) */}
                     <div className="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-sm z-10 pointer-events-none">
@@ -133,7 +140,7 @@ export default function LinkCard({ link }: LinkCardProps) {
                     </div>
 
                     {/* === HOVER ACTIONS (Bottom Row) === */}
-                    <div className="absolute inset-x-0 bottom-0 p-3 flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-20" onClick={(e) => e.stopPropagation()}>
+                    <div className={`absolute inset-x-0 bottom-0 p-3 flex items-center justify-between gap-2 z-20 ${hoverTranslateClass}`} onClick={(e) => e.stopPropagation()}>
 
                         {/* Primary Interaction Group */}
                         <div className="flex items-center gap-2">
