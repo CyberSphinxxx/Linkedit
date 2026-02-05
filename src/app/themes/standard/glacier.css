@@ -1,0 +1,21 @@
+/* Glacier Theme - Ice Cold */
+[data-theme="glacier"] {
+    --background: #05141f;
+    --surface: #0a2030;
+    --surface-elevated: #102d42;
+
+    --primary: #bae6fd;
+    --primary-glow: rgba(186, 230, 253, 0.4);
+    --accent: #7dd3fc;
+    --accent-glow: rgba(125, 211, 252, 0.4);
+
+    --foreground: #f0f9ff;
+    --foreground-muted: #94a3b8;
+
+    --success: #67e8f9;
+    --warning: #fcd34d;
+    --error: #f43f5e;
+
+    --grid-line: #bae6fd;
+    --grid-opacity: 0.05;
+}
