@@ -1,0 +1,17 @@
+/* Light Theme overrides */
+[data-theme="light"] {
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-elevated: #e2e8f0;
+
+    --primary: #0284c7;
+    --primary-glow: rgba(2, 132, 199, 0.2);
+    --accent: #7c3aed;
+    --accent-glow: rgba(124, 58, 237, 0.2);
+
+    --foreground: #0f172a;
+    --foreground-muted: #64748b;
+
+    --grid-line: #000000;
+    --grid-opacity: 0.04;
+}
