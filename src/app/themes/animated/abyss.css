@@ -1,0 +1,41 @@
+/* Abyss Theme (Animated) - Enhanced */
+[data-theme="abyss"] {
+    --background: #00040f;
+    --surface: #050a14;
+    --surface-elevated: #0b1526;
+    --primary: #00bfff;
+    --foreground: #e0faff;
+    --foreground-muted: #7dd3fc;
+    --grid-opacity: 0.1;
+
+    background-color: #00040f;
+    background-image:
+        radial-gradient(3px 3px at 20px 30px, rgba(255, 255, 255, 0.4), rgba(0, 0, 0, 0)),
+        radial-gradient(3px 3px at 40px 70px, rgba(255, 255, 255, 0.4), rgba(0, 0, 0, 0)),
+        radial-gradient(4px 4px at 50px 160px, rgba(255, 255, 255, 0.4), rgba(0, 0, 0, 0)),
+        radial-gradient(6px 6px at 90px 40px, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0)),
+        linear-gradient(to bottom, #001e3c 0%, #00040f 100%);
+    background-size: 200px 200px, 200px 200px, 200px 200px, 300px 300px, 100% 100%;
+    background-attachment: fixed;
+    animation: bubbles-rise 8s linear infinite;
+}
+
+[data-theme="abyss"] .theme-effect-card:hover {
+    box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+    border-color: #00bfff !important;
+    background: linear-gradient(to bottom, rgba(5, 10, 20, 0.8), rgba(0, 40, 80, 0.3));
+}
+
+@keyframes bubbles-rise {
+    0% {
+        background-position: 0% 110%, 20% 110%, 40% 110%, 90% 110%, 0 0;
+    }
+
+    50% {
+        background-position: 5px 50%, 25% 60%, 35% 55%, 95% 60%, 0 0;
+    }
+
+    100% {
+        background-position: 0% -10%, 20% -10%, 40% -10%, 90% -10%, 0 0;
+    }
+}
