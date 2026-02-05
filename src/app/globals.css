@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./themes/base.css";
+@import "./themes/standard/index.css";
 @import "./themes/animated/index.css";
 
 /* 
