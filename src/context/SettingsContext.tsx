@@ -31,12 +31,14 @@ export interface Settings {
     gridColumns: 2 | 3 | 4;
     showFloatingAddButton: boolean;
     stickyHeader: boolean;
+    favoriteThemes: string[];
 }
 
 interface SettingsContextType {
     settings: Settings;
     updateSettings: (updates: Partial<Settings>) => void;
     resetSettings: () => void;
+    toggleFavoriteTheme: (themeId: string) => void;
 }
 
 const DEFAULT_SETTINGS: Settings = {
@@ -52,6 +54,7 @@ const DEFAULT_SETTINGS: Settings = {
     gridColumns: 3,
     showFloatingAddButton: true,
     stickyHeader: true,
+    favoriteThemes: [],
 };
 
 const STORAGE_KEY = 'linkedit-settings';
@@ -152,11 +155,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setSettings(DEFAULT_SETTINGS);
     }, []);
 
+    const toggleFavoriteTheme = useCallback((themeId: string) => {
+        setSettings(prev => {
+            const favorites = prev.favoriteThemes || [];
+            const isFavorite = favorites.includes(themeId);
+            const newFavorites = isFavorite
+                ? favorites.filter(id => id !== themeId)
+                : [...favorites, themeId];
+
+            return { ...prev, favoriteThemes: newFavorites };
+        });
+    }, []);
+
     const contextValue = useMemo(() => ({
         settings,
         updateSettings,
         resetSettings,
-    }), [settings, updateSettings, resetSettings]);
+        toggleFavoriteTheme,
+    }), [settings, updateSettings, resetSettings, toggleFavoriteTheme]);
 
     return (
         <SettingsContext.Provider value={contextValue}>
