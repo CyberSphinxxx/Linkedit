@@ -6,7 +6,7 @@
  * 2. Add corresponding CSS variables in globals.css under [data-theme="your-theme-id"]
  */
 
-import { Monitor, Moon, Sun, Circle, Waves, TreePine, Sunset, Flower2, Stars, Heart } from 'lucide-react';
+import { Monitor, Moon, Sun, Circle, Waves, TreePine, Sunset, Flower2, Stars, Heart, Zap, Coffee, Snowflake, Ghost, Briefcase, Palette, Rocket, Code, CloudSun, Activity, Wind, Droplets, Grid } from 'lucide-react';
 import React from 'react';
 
 export interface ThemeConfig {
@@ -24,6 +24,8 @@ export interface ThemeConfig {
     isSystem?: boolean;
     /** Color scheme for native elements ('light' | 'dark') */
     colorScheme: 'light' | 'dark';
+    /** Whether the theme has animated elements */
+    isAnimated?: boolean;
 }
 
 /**
@@ -111,6 +113,118 @@ export const THEMES: ThemeConfig[] = [
         icon: React.createElement(Heart, { size: 20 }),
         previewColor: '#f43f5e',
         colorScheme: 'dark',
+    },
+    {
+        id: 'synthwave',
+        label: 'Synthwave',
+        description: 'Neon retro',
+        icon: React.createElement(Zap, { size: 20 }),
+        previewColor: '#ff71ce',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'coffee',
+        label: 'Coffee',
+        description: 'Warm brown',
+        icon: React.createElement(Coffee, { size: 20 }),
+        previewColor: '#d4a373',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'nord',
+        label: 'Nord',
+        description: 'Cool snow',
+        icon: React.createElement(Snowflake, { size: 20 }),
+        previewColor: '#88c0d0',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'dracula',
+        label: 'Dracula',
+        description: 'Vampire dark',
+        icon: React.createElement(Ghost, { size: 20 }),
+        previewColor: '#ff79c6',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'slate',
+        label: 'Slate',
+        description: 'Professional',
+        icon: React.createElement(Briefcase, { size: 20 }),
+        previewColor: '#94a3b8',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'chroma',
+        label: 'Chroma',
+        description: 'RGB Flow',
+        icon: React.createElement(Palette, { size: 20 }),
+        previewColor: 'linear-gradient(45deg, #ff0000, #00ff00, #0000ff)',
+        colorScheme: 'dark',
+        isAnimated: true,
+    },
+    {
+        id: 'nebula',
+        label: 'Nebula',
+        description: 'Cosmic Shift',
+        icon: React.createElement(Rocket, { size: 20 }),
+        previewColor: 'linear-gradient(45deg, #4b0082, #8a2be2)',
+        colorScheme: 'dark',
+        isAnimated: true,
+    },
+    {
+        id: 'matrix',
+        label: 'Matrix',
+        description: 'Digital Rain',
+        icon: React.createElement(Code, { size: 20 }),
+        previewColor: '#00ff00',
+        colorScheme: 'dark',
+        isAnimated: true,
+    },
+    {
+        id: 'sunset-flow',
+        label: 'Sunset Flow',
+        description: 'Moving Sky',
+        icon: React.createElement(CloudSun, { size: 20 }),
+        previewColor: 'linear-gradient(to top, #f97316, #9d4edd)',
+        colorScheme: 'dark',
+        isAnimated: true,
+    },
+    {
+        id: 'pulse',
+        label: 'Pulse',
+        description: 'Breathing Dark',
+        icon: React.createElement(Activity, { size: 20 }),
+        previewColor: '#ff0000',
+        colorScheme: 'dark',
+        isAnimated: true,
+    },
+    {
+        id: 'aurora',
+        label: 'Aurora',
+        description: 'Northern Lights',
+        icon: React.createElement(Wind, { size: 20 }),
+        previewColor: 'linear-gradient(to right, #00c6ff, #0072ff)',
+        colorScheme: 'dark',
+        isAnimated: true,
+    },
+    {
+        id: 'abyss',
+        label: 'Abyss',
+        description: 'Deep Ocean',
+        icon: React.createElement(Droplets, { size: 20 }),
+        previewColor: 'linear-gradient(to bottom, #000046, #1cb5e0)',
+        colorScheme: 'dark',
+        isAnimated: true,
+    },
+    {
+        id: 'cyberwire',
+        label: 'Cyberwire',
+        description: 'Neon Grid',
+        icon: React.createElement(Grid, { size: 20 }),
+        previewColor: 'linear-gradient(to bottom, #ff00cc, #333399)',
+        colorScheme: 'dark',
+        isAnimated: true,
     },
 ];
 
