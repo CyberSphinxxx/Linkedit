@@ -1,0 +1,21 @@
+/* Amber Theme - Warm Glow */
+[data-theme="amber"] {
+    --background: #1c150d;
+    --surface: #292015;
+    --surface-elevated: #362b1d;
+
+    --primary: #fbbf24;
+    --primary-glow: rgba(251, 191, 36, 0.4);
+    --accent: #f59e0b;
+    --accent-glow: rgba(245, 158, 11, 0.4);
+
+    --foreground: #fffbeb;
+    --foreground-muted: #a89a8a;
+
+    --success: #a3e635;
+    --warning: #fbbf24;
+    --error: #fb7185;
+
+    --grid-line: #fbbf24;
+    --grid-opacity: 0.05;
+}
