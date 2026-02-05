@@ -1,0 +1,21 @@
+/* Terminal Theme - Retro Hacker */
+[data-theme="terminal"] {
+    --background: #000000;
+    --surface: #0a0a0a;
+    --surface-elevated: #111111;
+
+    --primary: #33ff00;
+    --primary-glow: rgba(51, 255, 0, 0.4);
+    --accent: #00cc00;
+    --accent-glow: rgba(0, 204, 0, 0.4);
+
+    --foreground: #ccffcc;
+    --foreground-muted: #669966;
+
+    --success: #33ff00;
+    --warning: #ffff00;
+    --error: #ff0000;
+
+    --grid-line: #33ff00;
+    --grid-opacity: 0.1;
+}
