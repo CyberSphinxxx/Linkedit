@@ -1,0 +1,21 @@
+/* Slate Theme */
+[data-theme="slate"] {
+    --background: #020617;
+    --surface: #0f172a;
+    --surface-elevated: #1e293b;
+
+    --primary: #38bdf8;
+    --primary-glow: rgba(56, 189, 248, 0.4);
+    --accent: #c084fc;
+    --accent-glow: rgba(192, 132, 252, 0.4);
+
+    --foreground: #f1f5f9;
+    --foreground-muted: #94a3b8;
+
+    --success: #34d399;
+    --warning: #fbbf24;
+    --error: #f43f5e;
+
+    --grid-line: #38bdf8;
+    --grid-opacity: 0.05;
+}
