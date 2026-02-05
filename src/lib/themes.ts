@@ -6,7 +6,7 @@
  * 2. Add corresponding CSS variables in globals.css under [data-theme="your-theme-id"]
  */
 
-import { Monitor, Moon, Sun, Circle, Waves, TreePine, Sunset, Flower2, Stars, Heart, Zap, Coffee, Snowflake, Ghost, Briefcase, Palette, Rocket, Code, CloudSun, Activity, Wind, Droplets, Grid } from 'lucide-react';
+import { Monitor, Moon, Sun, Waves, TreePine, Sunset, Flower2, Stars, Heart, Zap, Coffee, Snowflake, Ghost, Briefcase, Palette, Rocket, Code, CloudSun, Activity, Wind, Droplets, Grid, Terminal, Leaf, Flame, MountainSnow, Crown } from 'lucide-react';
 import React from 'react';
 
 export interface ThemeConfig {
@@ -62,7 +62,7 @@ export const THEMES: ThemeConfig[] = [
         id: 'oled',
         label: 'OLED Black',
         description: 'Pure black',
-        icon: React.createElement(Circle, { size: 20, fill: 'currentColor' }),
+        icon: React.createElement(Moon, { size: 20 }),
         previewColor: '#000000',
         colorScheme: 'dark',
     },
@@ -225,6 +225,46 @@ export const THEMES: ThemeConfig[] = [
         previewColor: 'linear-gradient(to bottom, #ff00cc, #333399)',
         colorScheme: 'dark',
         isAnimated: true,
+    },
+    {
+        id: 'terminal',
+        label: 'Terminal',
+        description: 'Retro hacker',
+        icon: React.createElement(Terminal, { size: 20 }),
+        previewColor: '#33ff00',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'mint',
+        label: 'Mint',
+        description: 'Fresh green',
+        icon: React.createElement(Leaf, { size: 20 }),
+        previewColor: '#6ee7b7',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'amber',
+        label: 'Amber',
+        description: 'Warm glow',
+        icon: React.createElement(Flame, { size: 20 }),
+        previewColor: '#fbbf24',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'glacier',
+        label: 'Glacier',
+        description: 'Ice cold',
+        icon: React.createElement(MountainSnow, { size: 20 }),
+        previewColor: '#bae6fd',
+        colorScheme: 'dark',
+    },
+    {
+        id: 'royal',
+        label: 'Royal',
+        description: 'Gold & noble',
+        icon: React.createElement(Crown, { size: 20 }),
+        previewColor: '#facc15',
+        colorScheme: 'dark',
     },
 ];
 
