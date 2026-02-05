@@ -1,0 +1,21 @@
+/* Midnight Theme - Deep purple/blue */
+[data-theme="midnight"] {
+    --background: #0f0d1a;
+    --surface: #151226;
+    --surface-elevated: #1e1933;
+
+    --primary: #6366f1;
+    --primary-glow: rgba(99, 102, 241, 0.4);
+    --accent: #818cf8;
+    --accent-glow: rgba(129, 140, 248, 0.4);
+
+    --foreground: #e0e7ff;
+    --foreground-muted: #7c7fa8;
+
+    --success: #34d399;
+    --warning: #fbbf24;
+    --error: #fb7185;
+
+    --grid-line: #6366f1;
+    --grid-opacity: 0.05;
+}
