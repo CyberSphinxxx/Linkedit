@@ -1,0 +1,21 @@
+/* Synthwave Theme */
+[data-theme="synthwave"] {
+    --background: #2b213a;
+    --surface: #241b2f;
+    --surface-elevated: #1a1625;
+
+    --primary: #ff71ce;
+    --primary-glow: rgba(255, 113, 206, 0.4);
+    --accent: #01cdfe;
+    --accent-glow: rgba(1, 205, 254, 0.4);
+
+    --foreground: #fffbf9;
+    --foreground-muted: #b6b1cc;
+
+    --success: #05ffa1;
+    --warning: #fffb96;
+    --error: #ff71ce;
+
+    --grid-line: #ff71ce;
+    --grid-opacity: 0.05;
+}
