@@ -1,0 +1,44 @@
+/* Cyberwire Theme (Animated) - Enhanced */
+[data-theme="cyberwire"] {
+    --background: #100a1c;
+    --surface: #140d24;
+    --surface-elevated: #1e1533;
+    --primary: #ff00cc;
+    --foreground: #f0abfc;
+    --foreground-muted: #d8b4fe;
+    --grid-opacity: 0.15;
+
+    background-color: #100a1c;
+    /* Retro Grid - Enhanced Visibility */
+    background-image:
+        linear-gradient(rgba(255, 0, 204, 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 204, 0.4) 1px, transparent 1px),
+        linear-gradient(rgba(50, 200, 255, 0.2) 2px, transparent 2px),
+        /* Secondary grid line */
+        radial-gradient(circle at center, #1a102e 0%, #05020a 100%);
+
+    background-size: 40px 40px, 40px 40px, 120px 120px, 100% 100%;
+    background-position: center top;
+    background-attachment: fixed;
+    animation: grid-scroll 1.5s linear infinite;
+}
+
+[data-theme="cyberwire"] .theme-effect-card:hover {
+    box-shadow: 0 0 10px #ff00cc, 0 0 20px #333399;
+    border: 1px solid #ff00cc !important;
+    clip-path: polygon(0 0,
+            100% 0,
+            100% calc(100% - 10px),
+            calc(100% - 10px) 100%,
+            0 100%);
+}
+
+@keyframes grid-scroll {
+    0% {
+        background-position: center 0, center 0, center 0, center center;
+    }
+
+    100% {
+        background-position: center 40px, center 40px, center 120px, center center;
+    }
+}
