@@ -130,10 +130,21 @@ export default function Dashboard() {
         return null;
     }
 
+    const patternClasses: Record<string, string> = {
+        grid: 'bg-pattern-grid',
+        dots: 'bg-pattern-dots',
+        cross: 'bg-pattern-cross',
+        waves: 'bg-pattern-waves',
+        none: '',
+    };
+
+    const activePatternClass = patternClasses[settings.backgroundPattern] || '';
+
     return (
-        <div className={`min-h-screen bg-background ${settings.showGrid ? 'bg-grid' : ''}`}>
+        <div className={`min-h-screen ${activePatternClass}`}>
             {/* Header */}
             <Header
+                onAddClick={openAddModal}
                 searchBar={
                     <SearchBar
                         value={searchQuery}
@@ -145,8 +156,7 @@ export default function Dashboard() {
 
             {/* Main content with sidebar */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-                {/* Add Link Hero Area */}
-                <AddLinkArea onClick={() => setIsModalOpen(true)} />
+
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
