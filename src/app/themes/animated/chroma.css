@@ -1,0 +1,103 @@
+/* Chroma Theme (Animated) */
+[data-theme="chroma"] {
+    --background: #000000;
+    --surface: #0f100f;
+    --surface-elevated: #1a1b1a;
+    --primary: #44d62c;
+    --foreground: #ffffff;
+    --foreground-muted: #888888;
+    --grid-opacity: 0.1;
+
+    background-color: #000000;
+    background-image:
+        linear-gradient(rgba(10, 20, 10, 0.8) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10, 20, 10, 0.8) 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: center top;
+    background-attachment: fixed;
+    animation: none;
+}
+
+/* Ambient Gamer Lighting - Subtle RGB Fog */
+[data-theme="chroma"]::before {
+    content: "";
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: 200vmax;
+    height: 200vmax;
+    background-image:
+        conic-gradient(from 0deg, #ff0000, #00ff00, #0000ff, #ff0000);
+    background-size: 100% 100%;
+    filter: blur(120px);
+    z-index: -2;
+    animation: chroma-spin 60s linear infinite;
+    opacity: 0.15;
+}
+
+/* Chroma: Razer-style Cards */
+[data-theme="chroma"] .theme-effect-card {
+    position: relative;
+    background: #0f100f !important;
+    border: 1px solid #333 !important;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Chroma: Spectrum Cycle Hover Effect */
+[data-theme="chroma"] .theme-effect-card:hover {
+    border-color: transparent !important;
+    box-shadow: 0 0 15px rgba(68, 214, 44, 0.2);
+    transform: translateY(-2px);
+}
+
+[data-theme="chroma"] .theme-effect-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1.5px;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    background-size: 300% 100%;
+
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    animation: spectrum-cycle 3s linear infinite;
+    pointer-events: none;
+    z-index: 10;
+}
+
+[data-theme="chroma"] .theme-effect-card:hover::before {
+    opacity: 1;
+}
+
+[data-theme="chroma"] .theme-effect-card::after {
+    display: none;
+}
+
+@keyframes chroma-spin {
+    100% {
+        transform: rotate(1turn);
+    }
+}
+
+@keyframes spectrum-cycle {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 100% 50%;
+    }
+}
