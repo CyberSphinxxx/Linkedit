@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "./themes/base.css";
+@import "./themes/animated/index.css";
 
 /* 
   NOTE: The @theme block below is required for Tailwind v4 to map variables correctly.
@@ -23,207 +25,15 @@
   --animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-:root {
-  /* Background Colors */
-  --background: #0a0a0f;
-  --surface: #13131a;
-  --surface-elevated: #1a1a24;
 
-  /* Primary & Accent Colors */
-  --primary: #00f0ff;
-  --primary-glow: rgba(0, 240, 255, 0.4);
-  --accent: #9d4edd;
-  --accent-glow: rgba(157, 78, 221, 0.4);
-
-  /* Text Colors */
-  --foreground: #e8e8e8;
-  --foreground-muted: #888899;
-
-  /* Status Colors */
-  --success: #00ff88;
-  --warning: #ffaa00;
-  --error: #ff4455;
-
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #00f0ff 0%, #9d4edd 100%);
-  --gradient-surface: linear-gradient(180deg, #13131a 0%, #0a0a0f 100%);
-
-  /* Grid */
-  --grid-line: #ffffff;
-  --grid-opacity: 0.05;
-}
-
-/* Light Theme overrides via [data-theme="light"] */
-[data-theme="light"] {
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --surface-elevated: #e2e8f0;
-
-  --primary: #0284c7;
-  --primary-glow: rgba(2, 132, 199, 0.2);
-  --accent: #7c3aed;
-  --accent-glow: rgba(124, 58, 237, 0.2);
-
-  --foreground: #0f172a;
-  --foreground-muted: #64748b;
-
-  --grid-line: #000000;
-  --grid-opacity: 0.04;
-}
-
-/* OLED Black Theme */
-[data-theme="oled"] {
-  --background: #000000;
-  --surface: #0a0a0a;
-  --surface-elevated: #141414;
-
-  --primary: #00f0ff;
-  --primary-glow: rgba(0, 240, 255, 0.4);
-  --accent: #9d4edd;
-  --accent-glow: rgba(157, 78, 221, 0.4);
-
-  --foreground: #ffffff;
-  --foreground-muted: #888899;
-
-  --grid-line: #ffffff;
-  --grid-opacity: 0.03;
-}
-
-/* Ocean Theme - Deep blue */
-[data-theme="ocean"] {
-  --background: #0c1222;
-  --surface: #111827;
-  --surface-elevated: #1e293b;
-
-  --primary: #0ea5e9;
-  --primary-glow: rgba(14, 165, 233, 0.4);
-  --accent: #06b6d4;
-  --accent-glow: rgba(6, 182, 212, 0.4);
-
-  --foreground: #e2e8f0;
-  --foreground-muted: #64748b;
-
-  --success: #22d3ee;
-  --warning: #38bdf8;
-  --error: #f472b6;
-
-  --grid-line: #0ea5e9;
-  --grid-opacity: 0.05;
-}
-
-/* Forest Theme - Nature green */
-[data-theme="forest"] {
-  --background: #0a1510;
-  --surface: #0f1f17;
-  --surface-elevated: #162920;
-
-  --primary: #22c55e;
-  --primary-glow: rgba(34, 197, 94, 0.4);
-  --accent: #4ade80;
-  --accent-glow: rgba(74, 222, 128, 0.4);
-
-  --foreground: #dcfce7;
-  --foreground-muted: #6b8775;
-
-  --success: #4ade80;
-  --warning: #a3e635;
-  --error: #f87171;
-
-  --grid-line: #22c55e;
-  --grid-opacity: 0.05;
-}
-
-/* Sunset Theme - Warm orange */
-[data-theme="sunset"] {
-  --background: #18120a;
-  --surface: #221810;
-  --surface-elevated: #2e2018;
-
-  --primary: #f97316;
-  --primary-glow: rgba(249, 115, 22, 0.4);
-  --accent: #fb923c;
-  --accent-glow: rgba(251, 146, 60, 0.4);
-
-  --foreground: #fff7ed;
-  --foreground-muted: #9a8478;
-
-  --success: #fbbf24;
-  --warning: #f59e0b;
-  --error: #ef4444;
-
-  --grid-line: #f97316;
-  --grid-opacity: 0.05;
-}
-
-/* Lavender Theme - Soft purple */
-[data-theme="lavender"] {
-  --background: #130f18;
-  --surface: #1a1520;
-  --surface-elevated: #241d2e;
-
-  --primary: #a855f7;
-  --primary-glow: rgba(168, 85, 247, 0.4);
-  --accent: #c084fc;
-  --accent-glow: rgba(192, 132, 252, 0.4);
-
-  --foreground: #f3e8ff;
-  --foreground-muted: #8b7a99;
-
-  --success: #a78bfa;
-  --warning: #e879f9;
-  --error: #f472b6;
-
-  --grid-line: #a855f7;
-  --grid-opacity: 0.05;
-}
-
-/* Midnight Theme - Deep purple/blue */
-[data-theme="midnight"] {
-  --background: #0f0d1a;
-  --surface: #151226;
-  --surface-elevated: #1e1933;
-
-  --primary: #6366f1;
-  --primary-glow: rgba(99, 102, 241, 0.4);
-  --accent: #818cf8;
-  --accent-glow: rgba(129, 140, 248, 0.4);
-
-  --foreground: #e0e7ff;
-  --foreground-muted: #7c7fa8;
-
-  --success: #34d399;
-  --warning: #fbbf24;
-  --error: #fb7185;
-
-  --grid-line: #6366f1;
-  --grid-opacity: 0.05;
-}
-
-/* Rose Theme - Soft pink */
-[data-theme="rose"] {
-  --background: #180c10;
-  --surface: #221216;
-  --surface-elevated: #2e1a1f;
-
-  --primary: #f43f5e;
-  --primary-glow: rgba(244, 63, 94, 0.4);
-  --accent: #fb7185;
-  --accent-glow: rgba(251, 113, 133, 0.4);
-
-  --foreground: #ffe4e6;
-  --foreground-muted: #997a7e;
-
-  --success: #fb7185;
-  --warning: #fda4af;
-  --error: #ef4444;
-
-  --grid-line: #f43f5e;
-  --grid-opacity: 0.05;
-}
 
 /* Base styles */
-body {
+html {
   background-color: var(--background);
+}
+
+body {
+  background-color: transparent;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -232,6 +42,7 @@ body {
 /* Hide scrollbar globally */
 html,
 body {
+  min-height: 100vh;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -249,20 +60,59 @@ body::-webkit-scrollbar {
 }
 
 /* Background Grids & Patterns */
-.bg-grid {
+.bg-pattern-grid {
   background-size: 40px 40px;
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
 
-[data-theme="light"] .bg-grid {
+[data-theme="light"] .bg-pattern-grid {
   background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
 }
 
-/* Animations */
+.bg-pattern-dots {
+  background-size: 20px 20px;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+}
+
+[data-theme="light"] .bg-pattern-dots {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+}
+
+.bg-pattern-cross {
+  background-size: 20px 20px;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.07) 20%, transparent 20%),
+    radial-gradient(rgba(255, 255, 255, 0.07) 20%, transparent 20%);
+  background-position: 0 0, 10px 10px;
+}
+
+[data-theme="light"] .bg-pattern-cross {
+  background-image:
+    radial-gradient(rgba(0, 0, 0, 0.1) 20%, transparent 20%),
+    radial-gradient(rgba(0, 0, 0, 0.1) 20%, transparent 20%);
+}
+
+.bg-pattern-waves {
+  background-size: 40px 40px;
+  background-image: repeating-linear-gradient(45deg,
+      rgba(255, 255, 255, 0.03) 0,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 0,
+      transparent 50%);
+}
+
+[data-theme="light"] .bg-pattern-waves {
+  background-image: repeating-linear-gradient(45deg,
+      rgba(0, 0, 0, 0.03) 0,
+      rgba(0, 0, 0, 0.03) 1px,
+      transparent 0,
+      transparent 50%);
+}
+
 @keyframes slide-up {
   from {
     opacity: 0;
