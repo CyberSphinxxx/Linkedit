@@ -1,0 +1,21 @@
+/* Forest Theme - Nature green */
+[data-theme="forest"] {
+    --background: #0a1510;
+    --surface: #0f1f17;
+    --surface-elevated: #162920;
+
+    --primary: #22c55e;
+    --primary-glow: rgba(34, 197, 94, 0.4);
+    --accent: #4ade80;
+    --accent-glow: rgba(74, 222, 128, 0.4);
+
+    --foreground: #dcfce7;
+    --foreground-muted: #6b8775;
+
+    --success: #4ade80;
+    --warning: #a3e635;
+    --error: #f87171;
+
+    --grid-line: #22c55e;
+    --grid-opacity: 0.05;
+}
