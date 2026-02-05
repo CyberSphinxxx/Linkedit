@@ -1,0 +1,21 @@
+/* Royal Theme - Gold & Noble */
+[data-theme="royal"] {
+    --background: #0f0b21;
+    --surface: #181236;
+    --surface-elevated: #231b4d;
+
+    --primary: #facc15;
+    --primary-glow: rgba(250, 204, 21, 0.4);
+    --accent: #eab308;
+    --accent-glow: rgba(234, 179, 8, 0.4);
+
+    --foreground: #fefce8;
+    --foreground-muted: #9ca3af;
+
+    --success: #a3e635;
+    --warning: #facc15;
+    --error: #ef4444;
+
+    --grid-line: #facc15;
+    --grid-opacity: 0.05;
+}
