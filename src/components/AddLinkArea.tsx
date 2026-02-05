@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Plus, Link as LinkIcon, Sparkles, Command } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface AddLinkAreaProps {
     onClick: () => void;
@@ -9,49 +9,41 @@ interface AddLinkAreaProps {
 
 export default function AddLinkArea({ onClick }: AddLinkAreaProps) {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full mb-8"
+        <motion.button
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onClick}
+            className="group relative col-span-2 md:row-span-2 h-full min-h-[220px] overflow-hidden rounded-3xl bg-gradient-to-br from-surface-elevated via-surface to-surface border border-white/5 hover:border-primary/50 transition-all p-6 flex flex-col items-center justify-center gap-6 text-center shadow-2xl"
         >
-            <div className="flex flex-col gap-2">
-                {/* Clean, pill-shaped input trigger */}
-                <button
-                    onClick={onClick}
-                    className="group relative w-full flex items-center justify-between p-1 pr-1.5 rounded-full bg-surface border border-surface-elevated hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 outline-none"
-                >
-                    <div className="flex items-center gap-4 flex-1 pl-5 py-3">
-                        <div className="text-primary bg-primary/10 p-2 rounded-full group-hover:scale-110 transition-transform">
-                            <Plus size={20} strokeWidth={2.5} />
-                        </div>
-                        <div className="flex flex-col items-start gap-0.5">
-                            <span className="text-base font-medium text-foreground-muted group-hover:text-foreground transition-colors">
-                                Paste a link to save it...
-                            </span>
-                        </div>
-                    </div>
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(68,214,44,0.03)_1px,transparent_1px),linear-gradient(-45deg,rgba(68,214,44,0.03)_1px,transparent_1px)] bg-[size:20px_20px] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                    <div className="flex items-center gap-3">
-                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted group-hover:bg-surface-elevated/80 transition-colors">
-                            <span className="text-[10px] tracking-widest uppercase opacity-70">Press</span>
-                            <kbd className="font-mono bg-black/20 px-1.5 rounded text-foreground">N</kbd>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-primary text-background flex items-center justify-center opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                            <Sparkles size={18} />
-                        </div>
-                    </div>
-                </button>
-
-                {/* Helper text / Sub-actions (Optional, keeps the main bar clean) */}
-                <div className="px-6 flex items-center gap-6 text-xs text-foreground-muted font-medium opacity-60">
-                    <span className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-default">
-                        <LinkIcon size={12} /> Automatically detects metadata
-                    </span>
-                    <span className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-default">
-                        <Command size={12} /> CMD+V to paste
-                    </span>
+            {/* Icon Container */}
+            <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative w-20 h-20 rounded-3xl bg-surface border border-white/10 flex items-center justify-center group-hover:border-primary/50 group-hover:shadow-[0_0_30px_-5px_rgba(68,214,44,0.3)] transition-all duration-300">
+                    <Plus size={40} className="text-primary group-hover:scale-110 group-hover:rotate-90 transition-transform duration-500" />
                 </div>
             </div>
-        </motion.div>
+
+            {/* Text Content */}
+            <div className="space-y-2 relative z-10">
+                <h3 className="text-2xl font-bold text-foreground tracking-tight">Add New Link</h3>
+                <p className="text-sm text-foreground-muted max-w-[240px] mx-auto group-hover:text-foreground/80 transition-colors">
+                    Save, organize, and categorize your digital discoveries instantly.
+                </p>
+            </div>
+
+            {/* Shortcut Indicator */}
+            <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 opacity-50 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-background/40 backdrop-blur-md border border-white/10 text-[10px] font-bold text-foreground">
+                    <span className="opacity-70">PRESS</span>
+                    <kbd className="font-mono bg-primary/20 text-primary px-1.5 py-0.5 rounded border border-primary/20">N</kbd>
+                </div>
+            </div>
+        </motion.button>
     );
 }
