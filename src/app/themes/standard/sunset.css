@@ -1,0 +1,21 @@
+/* Sunset Theme - Warm orange */
+[data-theme="sunset"] {
+    --background: #18120a;
+    --surface: #221810;
+    --surface-elevated: #2e2018;
+
+    --primary: #f97316;
+    --primary-glow: rgba(249, 115, 22, 0.4);
+    --accent: #fb923c;
+    --accent-glow: rgba(251, 146, 60, 0.4);
+
+    --foreground: #fff7ed;
+    --foreground-muted: #9a8478;
+
+    --success: #fbbf24;
+    --warning: #f59e0b;
+    --error: #ef4444;
+
+    --grid-line: #f97316;
+    --grid-opacity: 0.05;
+}
