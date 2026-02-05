@@ -14,16 +14,23 @@ import { THEMES, getThemeById, isValidThemeId, type ThemeId } from '@/lib/themes
 export type ThemePreference = ThemeId;
 export type CardDensity = 'comfort' | 'compact';
 export type DefaultView = 'grid' | 'list';
+export type BackgroundPattern = 'none' | 'grid' | 'dots' | 'cross' | 'waves';
+export type LayoutStyle = 'masonry' | 'strict-grid';
+export type CornerRadius = 'sharp' | 'rounded';
 
 export interface Settings {
     theme: ThemePreference;
     cardDensity: CardDensity;
     defaultView: DefaultView;
     openLinksInNewTab: boolean;
-    showGrid: boolean;
+    backgroundPattern: BackgroundPattern;
+    layoutStyle: LayoutStyle;
+    cornerRadius: CornerRadius;
+    reduceMotion: boolean;
     autoFetchMetadata: boolean;
     gridColumns: 2 | 3 | 4;
     showFloatingAddButton: boolean;
+    stickyHeader: boolean;
 }
 
 interface SettingsContextType {
@@ -37,10 +44,14 @@ const DEFAULT_SETTINGS: Settings = {
     cardDensity: 'comfort',
     defaultView: 'grid',
     openLinksInNewTab: true,
-    showGrid: true,
+    backgroundPattern: 'grid',
+    layoutStyle: 'masonry',
+    cornerRadius: 'rounded',
+    reduceMotion: false,
     autoFetchMetadata: true,
     gridColumns: 3,
     showFloatingAddButton: true,
+    stickyHeader: true,
 };
 
 const STORAGE_KEY = 'linkedit-settings';
@@ -80,12 +91,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (stored) {
-                const parsed = JSON.parse(stored) as Partial<Settings>;
+                const parsed = JSON.parse(stored);
+
+                // DATA MIGRATION: Convert boolean showGrid to string backgroundPattern
+                // This handles legacy settings from before the update
+                if ('showGrid' in parsed && !parsed.backgroundPattern) {
+                    parsed.backgroundPattern = parsed.showGrid ? 'grid' : 'none';
+                    delete parsed.showGrid;
+                }
+
                 // Validate theme ID from storage
                 if (parsed.theme && !isValidThemeId(parsed.theme)) {
                     parsed.theme = 'dark'; // Fallback to default if invalid
                 }
-                setSettings(prev => ({ ...prev, ...parsed }));
+
+                // Ensure new defaults are present for existing users
+                const mergedSettings = { ...DEFAULT_SETTINGS, ...parsed };
+                setSettings(mergedSettings);
             }
         } catch (error) {
             console.error('Failed to load settings:', error);
