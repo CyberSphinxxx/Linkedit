@@ -1,0 +1,21 @@
+/* Rose Theme - Soft pink */
+[data-theme="rose"] {
+    --background: #180c10;
+    --surface: #221216;
+    --surface-elevated: #2e1a1f;
+
+    --primary: #f43f5e;
+    --primary-glow: rgba(244, 63, 94, 0.4);
+    --accent: #fb7185;
+    --accent-glow: rgba(251, 113, 133, 0.4);
+
+    --foreground: #ffe4e6;
+    --foreground-muted: #997a7e;
+
+    --success: #fb7185;
+    --warning: #fda4af;
+    --error: #ef4444;
+
+    --grid-line: #f43f5e;
+    --grid-opacity: 0.05;
+}
