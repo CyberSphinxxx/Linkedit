@@ -41,6 +41,20 @@ export default function MasonryGrid({ children }: MasonryGridProps) {
     const columnWrapper: ReactNode[][] = Array.from({ length: columns }, () => []);
     const items = Array.isArray(children) ? children : [children];
 
+    // Strict Grid Layout
+    if (settings.layoutStyle === 'strict-grid') {
+        return (
+            <div className={`grid gap-4`} style={{
+                gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
+            }}>
+                {items.map((child, i) => (
+                    <div key={i}>{child}</div>
+                ))}
+            </div>
+        );
+    }
+
+    // Masonry Layout
     items.forEach((child, index) => {
         if (child) {
             columnWrapper[index % columns].push(child);
