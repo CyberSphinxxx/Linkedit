@@ -4,13 +4,13 @@ import React, { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useSettings, CardDensity, DefaultView } from '@/context/SettingsContext';
-import { THEMES, type ThemeId } from '@/lib/themes';
+import { THEMES, getThemeById, type ThemeId } from '@/lib/themes';
 import { useLinks } from '@/context/LinksContext';
 import { useToast } from '@/components/Toast';
 import {
     ArrowLeft, Grid3X3, List, LayoutGrid, LayoutList,
     ExternalLink, Zap, Download, Upload, Trash2, Copy, FileJson, FileText, Loader2,
-    AlertTriangle, Palette, Settings2, Database, PlusCircle, Check, PanelTop
+    AlertTriangle, Palette, Settings2, Database, PlusCircle, Check, PanelTop, ShoppingBag
 } from 'lucide-react';
 import {
     parseBookmarksHTML,
@@ -220,91 +220,71 @@ export default function SettingsPage() {
                                             <Palette size={20} className="text-primary" />
                                             Theme
                                         </h2>
-                                        <div className="mb-6">
-                                            <h3 className="text-sm font-medium text-foreground-muted mb-3 uppercase tracking-wider">Standard</h3>
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                                {THEMES.filter(t => !t.isAnimated).map((theme) => (
-                                                    <button
-                                                        key={theme.id}
-                                                        onClick={() => updateSettings({ theme: theme.id as any })}
-                                                        className={`group theme-effect-card relative flex flex-col items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${settings.theme === theme.id
-                                                            ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                                                            : 'border-surface-elevated hover:border-primary/30 hover:bg-surface-elevated/50'
-                                                            }`}
-                                                    >
-                                                        <div
-                                                            className="w-full aspect-[16/9] rounded-lg shadow-sm border border-white/5 relative overflow-hidden group-hover:scale-105 transition-transform duration-500"
-                                                            style={{ background: theme.previewColor }}
-                                                        >
-                                                            {theme.colorScheme === 'light' && (
-                                                                <div className="absolute inset-0 bg-gradient-to-br from-black/5 to-transparent" />
-                                                            )}
-                                                            {settings.theme === theme.id && (
-                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-                                                                    <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center shadow-lg text-primary">
-                                                                        <Check size={16} strokeWidth={3} />
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-center w-full">
-                                                            <div className={`font-medium text-sm flex items-center justify-center gap-1.5 ${settings.theme === theme.id ? 'text-primary' : 'text-foreground'}`}>
-                                                                {theme.id !== 'system' && theme.icon}
-                                                                {theme.label}
-                                                            </div>
-                                                            <div className="text-[10px] text-foreground-muted mt-0.5 line-clamp-1">
-                                                                {theme.description}
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                ))}
+                                        <div className="bg-surface-elevated/30 border border-surface-elevated rounded-xl p-6 flex flex-col sm:flex-row items-center gap-6 mb-6">
+                                            {/* Current Theme Icon */}
+                                            <div className="relative group">
+                                                <div
+                                                    className="w-24 h-24 rounded-2xl shadow-lg flex items-center justify-center text-primary-foreground relative overflow-hidden"
+                                                    style={{ background: getThemeById(settings.theme)?.previewColor || '#333' }}
+                                                >
+                                                    {/* Dark overlay for contrast if needed */}
+                                                    <div className="absolute inset-0 bg-black/10" />
+
+                                                    <div className="relative z-10 bg-background/20 backdrop-blur-md p-4 rounded-xl border border-white/20 shadow-xl">
+                                                        {React.cloneElement(getThemeById(settings.theme)?.icon as any || <Palette />, { size: 32, className: 'text-white' })}
+                                                    </div>
+                                                </div>
+                                                <div className="absolute -bottom-2 -right-2 bg-success text-success-foreground text-[10px] font-bold px-2 py-0.5 rounded-full border border-background shadow-sm flex items-center gap-1">
+                                                    <Check size={10} strokeWidth={4} />
+                                                    Active
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Animated Themes */}
-                                        <div>
-                                            <h3 className="text-sm font-medium text-foreground-muted mb-3 uppercase tracking-wider flex items-center gap-2">
-                                                <Zap size={14} className="text-warning" />
-                                                Live & Animated
-                                            </h3>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {THEMES.filter(t => t.isAnimated).map((theme) => (
-                                                    <button
-                                                        key={theme.id}
-                                                        onClick={() => updateSettings({ theme: theme.id as any })}
-                                                        className={`group theme-effect-card relative flex items-center gap-4 p-4 rounded-xl border transition-all duration-500 overflow-hidden ${settings.theme === theme.id
-                                                            ? 'border-accent bg-accent/10 ring-2 ring-accent/30'
-                                                            : 'border-surface-elevated hover:border-accent/40 hover:bg-surface-elevated/30'
-                                                            }`}
-                                                    >
-                                                        {/* Animated Background Preview */}
-                                                        <div className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-40"
-                                                            style={{ background: theme.previewColor }}
-                                                        />
+                                            <div className="flex-1 text-center sm:text-left">
+                                                <div className="text-sm text-foreground-muted uppercase tracking-wider font-semibold mb-1">Current Look</div>
+                                                <h3 className="text-2xl font-bold text-foreground mb-1">
+                                                    {getThemeById(settings.theme)?.label || 'Unknown Theme'}
+                                                </h3>
+                                                <p className="text-foreground-muted mb-4 max-w-sm mx-auto sm:mx-0">
+                                                    {getThemeById(settings.theme)?.description || 'Custom theme'}
+                                                </p>
 
-                                                        <div className="relative z-10 w-12 h-12 rounded-lg shadow-lg flex items-center justify-center bg-surface-elevated border border-white/10 group-hover:scale-110 transition-transform duration-500">
-                                                            {React.cloneElement(theme.icon as any, {
-                                                                size: 24,
-                                                                className: settings.theme === theme.id ? 'text-accent' : 'text-foreground'
-                                                            })}
-                                                        </div>
+                                                <button
+                                                    onClick={() => router.push('/themes')}
+                                                    className="inline-flex items-center gap-2 border border-primary/30 bg-primary/5 text-primary px-5 py-2.5 rounded-lg font-medium hover:bg-primary/15 hover:border-primary/50 active:scale-95 transition-all"
+                                                >
+                                                    <ShoppingBag size={18} />
+                                                    Browse Theme Store
+                                                </button>
+                                            </div>
 
-                                                        <div className="relative z-10 text-left flex-1">
-                                                            <div className={`font-bold text-base ${settings.theme === theme.id ? 'text-accent' : 'text-foreground'}`}>
-                                                                {theme.label}
-                                                            </div>
-                                                            <div className="text-xs text-foreground-muted">
-                                                                {theme.description}
-                                                            </div>
-                                                        </div>
+                                            <div className="hidden sm:block w-px h-24 bg-surface-elevated mx-2" />
 
-                                                        {settings.theme === theme.id && (
-                                                            <div className="relative z-10 w-6 h-6 rounded-full bg-accent flex items-center justify-center shadow-lg text-white">
-                                                                <Check size={14} strokeWidth={3} />
-                                                            </div>
-                                                        )}
-                                                    </button>
-                                                ))}
+                                            <div className="hidden sm:flex flex-col gap-2 min-w-[140px]">
+                                                <div className="text-xs font-medium text-foreground-muted uppercase tracking-wider mb-1">Quick Switch</div>
+                                                <div className="flex gap-2">
+                                                    {['light', 'oled'].map(id => {
+                                                        const t = getThemeById(id);
+                                                        if (!t) return null;
+                                                        return (
+                                                            <button
+                                                                key={id}
+                                                                onClick={() => updateSettings({ theme: id as any })}
+                                                                title={t.label}
+                                                                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${settings.theme === id
+                                                                    ? 'border-primary ring-2 ring-primary/20 scale-110'
+                                                                    : 'border-surface-elevated hover:bg-surface-elevated hover:scale-105'
+                                                                    }`}
+                                                                style={{ background: t.previewColor }}
+                                                            >
+                                                                {React.cloneElement(t.icon as any, {
+                                                                    size: 16,
+                                                                    className: `drop-shadow-md ${t.colorScheme === 'light' ? 'text-black/70' : 'text-white'}`
+                                                                })}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
                                             </div>
                                         </div>
                                     </section>
