@@ -1,0 +1,59 @@
+/* Pulse Theme (Animated) */
+[data-theme="pulse"] {
+    --background: #1a0000;
+    --surface: #2b0505;
+    --surface-elevated: #3d0a0a;
+    --primary: #ff3333;
+    --foreground: #ffe6e6;
+    --foreground-muted: #fca5a5;
+    --grid-opacity: 0.15;
+
+    background-color: #050000;
+    background-image: none;
+    background-size: auto;
+    background-position: center;
+    background-attachment: scroll;
+    animation: none;
+}
+
+/* Pulse: Liquid Background Layer (Blurred for smoothness) */
+[data-theme="pulse"]::before {
+    content: "";
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    z-index: -1;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(220, 0, 0, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(180, 0, 50, 0.3) 0%, transparent 40%),
+        radial-gradient(circle at 20% 80%, rgba(255, 60, 0, 0.3) 0%, transparent 40%),
+        linear-gradient(45deg, rgba(50, 0, 0, 0.2) 0%, transparent 100%);
+    background-size: 100% 100%;
+    filter: blur(80px);
+    animation: liquid-drift 20s linear infinite alternate;
+    pointer-events: none;
+}
+
+/* Pulse: Hover Effect */
+[data-theme="pulse"] .theme-effect-card:hover {
+    box-shadow: 0 0 30px rgba(255, 50, 50, 0.3);
+    border-color: #ff3333 !important;
+    background: rgba(80, 10, 10, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+@keyframes liquid-drift {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    50% {
+        transform: rotate(180deg) scale(1.1);
+    }
+
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
+}
