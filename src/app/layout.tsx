@@ -7,6 +7,7 @@ import { CollectionsProvider } from "@/context/CollectionsContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { ToastProvider } from "@/components/Toast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import CursorGlow from "@/components/CursorGlow";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
               <CollectionsProvider>
                 <LinksProvider>
                   <ToastProvider>
+                    <CursorGlow />
                     {children}
                   </ToastProvider>
                 </LinksProvider>
