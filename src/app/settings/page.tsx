@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useSettings, CardDensity, DefaultView } from '@/context/SettingsContext';
@@ -10,7 +10,7 @@ import { useToast } from '@/components/Toast';
 import {
     ArrowLeft, Grid3X3, List, LayoutGrid, LayoutList,
     ExternalLink, Zap, Download, Upload, Trash2, Copy, FileJson, FileText, Loader2,
-    AlertTriangle, Palette, Settings2, Database, PlusCircle
+    AlertTriangle, Palette, Settings2, Database, PlusCircle, Check, PanelTop
 } from 'lucide-react';
 import {
     parseBookmarksHTML,
@@ -220,34 +220,92 @@ export default function SettingsPage() {
                                             <Palette size={20} className="text-primary" />
                                             Theme
                                         </h2>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                            {THEMES.map((theme) => (
-                                                <button
-                                                    key={theme.id}
-                                                    onClick={() => updateSettings({ theme: theme.id as ThemeId })}
-                                                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${settings.theme === theme.id
-                                                        ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/30'
-                                                        : 'border-surface-elevated hover:border-primary/30 text-foreground-muted hover:text-foreground'
-                                                        }`}
-                                                >
-                                                    {/* Color preview circle */}
-                                                    <div
-                                                        className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${settings.theme === theme.id
-                                                            ? 'border-primary scale-110'
-                                                            : 'border-transparent group-hover:border-white/20'
+                                        <div className="mb-6">
+                                            <h3 className="text-sm font-medium text-foreground-muted mb-3 uppercase tracking-wider">Standard</h3>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                                {THEMES.filter(t => !t.isAnimated).map((theme) => (
+                                                    <button
+                                                        key={theme.id}
+                                                        onClick={() => updateSettings({ theme: theme.id as any })}
+                                                        className={`group theme-effect-card relative flex flex-col items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${settings.theme === theme.id
+                                                            ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
+                                                            : 'border-surface-elevated hover:border-primary/30 hover:bg-surface-elevated/50'
                                                             }`}
-                                                        style={{ background: theme.previewColor }}
                                                     >
-                                                        {theme.isSystem && (
-                                                            <span className="text-white text-xs font-bold">A</span>
+                                                        <div
+                                                            className="w-full aspect-[16/9] rounded-lg shadow-sm border border-white/5 relative overflow-hidden group-hover:scale-105 transition-transform duration-500"
+                                                            style={{ background: theme.previewColor }}
+                                                        >
+                                                            {theme.colorScheme === 'light' && (
+                                                                <div className="absolute inset-0 bg-gradient-to-br from-black/5 to-transparent" />
+                                                            )}
+                                                            {settings.theme === theme.id && (
+                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                                                                    <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center shadow-lg text-primary">
+                                                                        <Check size={16} strokeWidth={3} />
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-center w-full">
+                                                            <div className={`font-medium text-sm flex items-center justify-center gap-1.5 ${settings.theme === theme.id ? 'text-primary' : 'text-foreground'}`}>
+                                                                {theme.id !== 'system' && theme.icon}
+                                                                {theme.label}
+                                                            </div>
+                                                            <div className="text-[10px] text-foreground-muted mt-0.5 line-clamp-1">
+                                                                {theme.description}
+                                                            </div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Animated Themes */}
+                                        <div>
+                                            <h3 className="text-sm font-medium text-foreground-muted mb-3 uppercase tracking-wider flex items-center gap-2">
+                                                <Zap size={14} className="text-warning" />
+                                                Live & Animated
+                                            </h3>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {THEMES.filter(t => t.isAnimated).map((theme) => (
+                                                    <button
+                                                        key={theme.id}
+                                                        onClick={() => updateSettings({ theme: theme.id as any })}
+                                                        className={`group theme-effect-card relative flex items-center gap-4 p-4 rounded-xl border transition-all duration-500 overflow-hidden ${settings.theme === theme.id
+                                                            ? 'border-accent bg-accent/10 ring-2 ring-accent/30'
+                                                            : 'border-surface-elevated hover:border-accent/40 hover:bg-surface-elevated/30'
+                                                            }`}
+                                                    >
+                                                        {/* Animated Background Preview */}
+                                                        <div className="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-40"
+                                                            style={{ background: theme.previewColor }}
+                                                        />
+
+                                                        <div className="relative z-10 w-12 h-12 rounded-lg shadow-lg flex items-center justify-center bg-surface-elevated border border-white/10 group-hover:scale-110 transition-transform duration-500">
+                                                            {React.cloneElement(theme.icon as any, {
+                                                                size: 24,
+                                                                className: settings.theme === theme.id ? 'text-accent' : 'text-foreground'
+                                                            })}
+                                                        </div>
+
+                                                        <div className="relative z-10 text-left flex-1">
+                                                            <div className={`font-bold text-base ${settings.theme === theme.id ? 'text-accent' : 'text-foreground'}`}>
+                                                                {theme.label}
+                                                            </div>
+                                                            <div className="text-xs text-foreground-muted">
+                                                                {theme.description}
+                                                            </div>
+                                                        </div>
+
+                                                        {settings.theme === theme.id && (
+                                                            <div className="relative z-10 w-6 h-6 rounded-full bg-accent flex items-center justify-center shadow-lg text-white">
+                                                                <Check size={14} strokeWidth={3} />
+                                                            </div>
                                                         )}
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <div className="text-xs font-medium">{theme.label}</div>
-                                                        <div className="text-[10px] opacity-60">{theme.description}</div>
-                                                    </div>
-                                                </button>
-                                            ))}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </section>
 
@@ -256,28 +314,46 @@ export default function SettingsPage() {
                                     <section>
                                         <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                                             <Grid3X3 size={20} className="text-primary" />
-                                            Background
+                                            Background Pattern
                                         </h2>
-                                        <label className="flex items-center justify-between p-4 rounded-xl border border-surface-elevated hover:border-primary/30 transition-colors cursor-pointer">
-                                            <div className="flex items-center gap-3">
-                                                <Grid3X3 size={20} className="text-primary" />
-                                                <div>
-                                                    <div className="font-medium text-foreground">Show grid background</div>
-                                                    <div className="text-sm text-foreground-muted">Cyberpunk grid pattern</div>
-                                                </div>
-                                            </div>
-                                            <div className="relative">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={settings.showGrid}
-                                                    onChange={(e) => updateSettings({ showGrid: e.target.checked })}
-                                                    className="sr-only peer"
-                                                />
-                                                <div className="w-12 h-7 bg-surface-elevated rounded-full peer-checked:bg-primary transition-colors" />
-                                                <div className="absolute left-1 top-1 w-5 h-5 bg-foreground-muted rounded-full transition-all peer-checked:translate-x-5 peer-checked:bg-background" />
-                                            </div>
-                                        </label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                            {[
+                                                { id: 'grid', label: 'Grid', desc: 'Cyberpunk', class: 'bg-pattern-grid' },
+                                                { id: 'dots', label: 'Dots', desc: 'Minimal', class: 'bg-pattern-dots' },
+                                                { id: 'cross', label: 'Cross', desc: 'Technical', class: 'bg-pattern-cross' },
+                                                { id: 'waves', label: 'Waves', desc: 'Fluid', class: 'bg-pattern-waves' },
+                                                { id: 'none', label: 'None', desc: 'Clean', class: '' },
+                                            ].map((pattern) => (
+                                                <button
+                                                    key={pattern.id}
+                                                    onClick={() => updateSettings({ backgroundPattern: pattern.id as any })}
+                                                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${settings.backgroundPattern === pattern.id
+                                                        ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary/30'
+                                                        : 'border-surface-elevated hover:border-primary/30 text-foreground-muted hover:text-foreground'
+                                                        }`}
+                                                >
+                                                    <div className={`w-full h-16 rounded-lg border border-surface-elevated/50 overflow-hidden relative ${settings.theme === 'light' ? 'bg-gray-100' : 'bg-black/20'}`}>
+                                                        {pattern.id !== 'none' && (
+                                                            <div className={`absolute inset-0 ${pattern.class} opacity-50`} />
+                                                        )}
+                                                        {settings.backgroundPattern === pattern.id && (
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <div className="w-6 h-6 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center">
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,240,255,0.6)]" />
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-xs font-medium">{pattern.label}</div>
+                                                        <div className="text-[10px] opacity-60">{pattern.desc}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </section>
+
+
 
                                     <div className="border-t border-surface-elevated" />
 
@@ -312,6 +388,110 @@ export default function SettingsPage() {
                             {/* Layout Tab */}
                             {activeTab === 'layout' && (
                                 <>
+                                    <section>
+                                        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                                            <Settings2 size={20} className="text-accent" />
+                                            Visuals & Motion
+                                        </h2>
+                                        <div className="space-y-4">
+                                            {/* Layout Style */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[
+                                                    { id: 'masonry', label: 'Masonry', desc: 'Pinterest Style', icon: <LayoutList size={20} /> },
+                                                    { id: 'strict-grid', label: 'Strict Grid', desc: 'Uniform Squares', icon: <Grid3X3 size={20} /> },
+                                                ].map((layout) => (
+                                                    <button
+                                                        key={layout.id}
+                                                        onClick={() => updateSettings({ layoutStyle: layout.id as any })}
+                                                        className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${settings.layoutStyle === layout.id
+                                                            ? 'border-accent bg-accent/10 text-foreground'
+                                                            : 'border-surface-elevated hover:border-accent/30 text-foreground-muted hover:text-foreground'
+                                                            }`}
+                                                    >
+                                                        <span className={settings.layoutStyle === layout.id ? 'text-accent' : ''}>{layout.icon}</span>
+                                                        <div>
+                                                            <div className="font-medium text-sm">{layout.label}</div>
+                                                            <div className="text-[10px] opacity-70">{layout.desc}</div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Corner Radius & Reduce Motion */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div className="p-4 rounded-xl border border-surface-elevated bg-surface-elevated/30">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="font-medium text-sm text-foreground">Corner Radius</div>
+                                                        <div className={`text-xs font-bold px-2 py-0.5 rounded-full ${settings.cornerRadius === 'rounded' ? 'bg-primary/20 text-primary' : 'bg-surface-elevated border border-white/10 text-foreground-muted'}`}>
+                                                            {settings.cornerRadius === 'rounded' ? 'Rounded' : 'Sharp'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2 bg-surface-elevated rounded-lg p-1">
+                                                        <button
+                                                            onClick={() => updateSettings({ cornerRadius: 'rounded' })}
+                                                            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${settings.cornerRadius === 'rounded'
+                                                                ? 'bg-background text-foreground shadow-sm'
+                                                                : 'text-foreground-muted hover:text-foreground'
+                                                                }`}
+                                                        >
+                                                            Rounded
+                                                        </button>
+                                                        <button
+                                                            onClick={() => updateSettings({ cornerRadius: 'sharp' })}
+                                                            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${settings.cornerRadius === 'sharp'
+                                                                ? 'bg-background text-foreground shadow-sm'
+                                                                : 'text-foreground-muted hover:text-foreground'
+                                                                }`}
+                                                        >
+                                                            Sharp
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <label className="flex items-center justify-between p-4 rounded-xl border border-surface-elevated hover:border-warning/30 transition-colors cursor-pointer bg-surface-elevated/30">
+                                                    <div className="flex items-center gap-3">
+                                                        <LayoutGrid size={20} className="text-warning" />
+                                                        <div>
+                                                            <div className="font-medium text-sm text-foreground">Reduce Motion</div>
+                                                            <div className="text-[10px] text-foreground-muted">Disable animations</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={settings.reduceMotion}
+                                                            onChange={(e) => updateSettings({ reduceMotion: e.target.checked })}
+                                                            className="sr-only peer"
+                                                        />
+                                                        <div className="w-10 h-6 bg-surface-elevated border border-white/10 rounded-full peer-checked:bg-warning transition-colors" />
+                                                        <div className="absolute left-1 top-1 w-4 h-4 bg-foreground-muted rounded-full transition-all peer-checked:translate-x-4 peer-checked:bg-background" />
+                                                    </div>
+                                                </label>
+
+                                                <label className="flex items-center justify-between p-4 rounded-xl border border-surface-elevated hover:border-primary/30 transition-colors cursor-pointer bg-surface-elevated/30">
+                                                    <div className="flex items-center gap-3">
+                                                        <PanelTop size={20} className="text-primary" />
+                                                        <div>
+                                                            <div className="font-medium text-sm text-foreground">Sticky Header</div>
+                                                            <div className="text-[10px] text-foreground-muted">Keep header visible on scroll</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={settings.stickyHeader}
+                                                            onChange={(e) => updateSettings({ stickyHeader: e.target.checked })}
+                                                            className="sr-only peer"
+                                                        />
+                                                        <div className="w-10 h-6 bg-surface-elevated border border-white/10 rounded-full peer-checked:bg-primary transition-colors" />
+                                                        <div className="absolute left-1 top-1 w-4 h-4 bg-foreground-muted rounded-full transition-all peer-checked:translate-x-4 peer-checked:bg-background" />
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <div className="border-t border-surface-elevated" />
                                     <section>
                                         <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                                             <LayoutGrid size={20} className="text-accent" />
