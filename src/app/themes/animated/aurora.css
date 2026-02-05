@@ -1,0 +1,87 @@
+/* Aurora Theme (Animated) */
+[data-theme="aurora"] {
+    --background: #020617;
+    --surface: #0f172a;
+    --surface-elevated: #1e293b;
+    --primary: #22d3ee;
+    --foreground: #f0f9ff;
+    --foreground-muted: #94a3b8;
+    --grid-opacity: 0.1;
+
+    background-color: #020617;
+    background-image:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.4) 0%, transparent 60%),
+        radial-gradient(white 1px, transparent 1px),
+        radial-gradient(rgba(255, 255, 255, 0.8) 1.5px, transparent 1.5px);
+
+    background-size:
+        100% 100%,
+        350px 350px,
+        500px 500px;
+
+    background-position:
+        center top,
+        0 0,
+        50px 50px;
+
+    background-attachment: fixed;
+    animation: star-drift 60s linear infinite;
+}
+
+/* Aurora: Cyan Wave Layer */
+[data-theme="aurora"]::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    background-image: linear-gradient(60deg, rgba(34, 211, 238, 0.4) 0%, transparent 50%);
+    background-size: 200% 200%;
+    animation: aurora-wave 15s ease-in-out infinite alternate;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+/* Aurora: Purple Wave Layer */
+[data-theme="aurora"]::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    background-image: linear-gradient(-60deg, rgba(168, 85, 247, 0.4) 0%, transparent 50%);
+    background-size: 200% 200%;
+    animation: aurora-wave 25s ease-in-out infinite alternate-reverse;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+[data-theme="aurora"] .theme-effect-card:hover {
+    box-shadow: 0 0 25px rgba(34, 211, 238, 0.3), inset 0 0 20px rgba(168, 85, 247, 0.1);
+    border-color: #22d3ee !important;
+    backdrop-filter: blur(5px);
+}
+
+@keyframes aurora-wave {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes star-drift {
+    0% {
+        background-position: center top, 0 0, 50px 50px;
+    }
+
+    100% {
+        background-position: center top, -100px -150px, 150px -50px;
+    }
+}
