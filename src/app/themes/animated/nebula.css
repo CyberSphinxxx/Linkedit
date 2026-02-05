@@ -1,0 +1,48 @@
+/* Nebula Theme (Animated) */
+[data-theme="nebula"] {
+    --background: #050505;
+    --surface: #1e1329;
+    --surface-elevated: #2a1b3d;
+    --primary: #a855f7;
+    --foreground: #f3e8ff;
+    --foreground-muted: #a78bfa;
+    --grid-opacity: 0.08;
+
+    background-color: #050505;
+    background-image:
+        radial-gradient(white, rgba(255, 255, 255, .2) 2px, transparent 3px),
+        radial-gradient(white, rgba(255, 255, 255, .15) 1px, transparent 2px),
+        radial-gradient(white, rgba(255, 255, 255, .1) 2px, transparent 3px),
+        radial-gradient(circle at 50% 50%, #1e1329 0%, #0f0b14 100%);
+    background-size: 550px 550px, 350px 350px, 250px 250px, 100% 100%;
+    background-position: 0 0, 40px 60px, 130px 270px, 0 0;
+    animation: star-move 60s linear infinite, nebula-pulse 10s ease-in-out infinite alternate;
+    background-attachment: fixed;
+}
+
+/* Nebula: Cosmic Glow Hover */
+[data-theme="nebula"] .theme-effect-card:hover {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(59, 130, 246, 0.2);
+    border-color: rgba(168, 85, 247, 0.6) !important;
+    transform: translateY(-4px) scale(1.02);
+}
+
+@keyframes star-move {
+    from {
+        background-position: 0 0, 40px 60px, 130px 270px;
+    }
+
+    to {
+        background-position: 550px 550px, 390px 410px, 380px 520px;
+    }
+}
+
+@keyframes nebula-pulse {
+    0% {
+        background-color: #140c1c;
+    }
+
+    100% {
+        background-color: #1e1329;
+    }
+}
