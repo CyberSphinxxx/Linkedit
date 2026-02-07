@@ -78,13 +78,25 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
     }, [isOpen]);
 
     // Extract dominant color when preview image loads
+    const processedImages = useRef<Set<string>>(new Set());
+
     useEffect(() => {
         if (preview?.image && !preview.image.includes('placehold')) {
-            extractDominantColor(preview.image).then(setDominantColor);
+            // Prevent reprocessing the same image if it hasn't changed
+            if (processedImages.current.has(preview.image)) return;
+
+            processedImages.current.add(preview.image);
+            extractDominantColor(preview.image)
+                .then(color => {
+                    if (mounted) setDominantColor(color);
+                })
+                .catch(() => {
+                    if (mounted) setDominantColor(null);
+                });
         } else {
             setDominantColor(null);
         }
-    }, [preview?.image]);
+    }, [preview?.image, mounted]);
 
     // Close collection dropdown when clicking outside
     useEffect(() => {
@@ -96,6 +108,13 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Also clear processed images when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            processedImages.current.clear();
+        }
+    }, [isOpen]);
 
     // Focus new collection input when creating
     useEffect(() => {
@@ -112,22 +131,23 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
         setNote('');
         setIsNoteExpanded(false);
         setDominantColor(null);
+        setCustomImageUrl('');
         // Keep collection selection for batch adding
     };
 
     const handleSave = useCallback((andAddAnother = false) => {
-        if (preview) {
+        if (preview || customImageUrl) {
             const newLink: Omit<LinkType, '_id'> = {
-                original_url: preview.url,
+                original_url: preview?.url || url,
                 metadata: {
-                    title: preview.title,
-                    description: preview.description,
-                    thumbnail_image: customImageUrl || preview.image,
-                    site_name: preview.siteName,
-                    favicon: preview.favicon,
+                    title: preview?.title || 'Untitled Link',
+                    description: preview?.description || '',
+                    thumbnail_image: customImageUrl || preview?.image || '',
+                    site_name: preview?.siteName || new URL(url).hostname,
+                    favicon: preview?.favicon || `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`,
                 },
                 tags,
-                media_type: preview.mediaType,
+                media_type: preview?.mediaType || 'article',
                 is_favorite: false,
                 created_at: new Date(),
                 ...(note.trim() ? { note: note.trim() } : {}),
@@ -141,7 +161,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                 onClose();
             }
         }
-    }, [preview, tags, note, selectedCollection, onSave, onClose]);
+    }, [preview, customImageUrl, url, tags, note, selectedCollection, onSave, onClose]);
 
     // Handle escape key and keyboard shortcuts
     useEffect(() => {
@@ -181,12 +201,9 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
             const data = await response.json();
             setPreview(data);
 
-            // Auto-suggest media type tag
-            if (data.mediaType && data.mediaType !== 'article') {
-                if (!tags.includes(`#${data.mediaType}`)) {
-                    setTags(prev => [...prev, `#${data.mediaType}`]);
-                }
-            }
+            setPreview(data);
+
+            // Removed auto-tagging per user request
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch link preview');
         } finally {
@@ -346,106 +363,108 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                     )}
                                 </div>
 
-                                {/* Preview Card */}
-                                {preview && (
+                                {/* Custom Image Input - Only visible when URL is entered */}
+                                {url && (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-sm font-medium text-foreground-muted">
+                                                Preview Image URL <span className="text-xs opacity-50 font-normal">(optional)</span>
+                                            </label>
+                                        </div>
+                                        <input
+                                            type="url"
+                                            value={customImageUrl}
+                                            onChange={(e) => setCustomImageUrl(e.target.value)}
+                                            placeholder="https://example.com/image.jpg"
+                                            className="w-full px-4 py-3 rounded-xl bg-background border border-surface-elevated focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-foreground-muted/50 outline-none transition-all text-sm"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Preview Card or Skeleton */}
+                                {(isLoading || preview || customImageUrl) && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="rounded-xl overflow-hidden border border-surface-elevated bg-background"
                                     >
-                                        {/* Thumbnail */}
-                                        <div className="relative aspect-video bg-surface-elevated overflow-hidden">
-                                            {(customImageUrl || preview.image) ? (
-                                                <Image
-                                                    src={customImageUrl || preview.image}
-                                                    alt={preview.title}
-                                                    fill
-                                                    className="object-cover"
-                                                    unoptimized
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-surface-elevated">
-                                                    <ImageIcon className="w-12 h-12 text-foreground-muted/20" />
+                                        {isLoading ? (
+                                            // Skeleton Loader
+                                            <div className="animate-pulse">
+                                                <div className="aspect-video bg-surface-elevated/50" />
+                                                <div className="p-4 space-y-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-4 rounded bg-surface-elevated/50" />
+                                                        <div className="h-3 w-20 rounded bg-surface-elevated/50" />
+                                                    </div>
+                                                    <div className="h-5 w-3/4 rounded bg-surface-elevated/50" />
+                                                    <div className="h-4 w-full rounded bg-surface-elevated/50" />
                                                 </div>
-                                            )}
-
-                                            {/* Edit Image Controls */}
-                                            <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setIsEditingImage(!isEditingImage);
-                                                    }}
-                                                    className={`p-1.5 rounded-lg backdrop-blur-md transition-colors ${isEditingImage
-                                                        ? 'bg-primary text-background'
-                                                        : 'bg-black/40 text-white hover:bg-black/60'
-                                                        }`}
-                                                    title="Change preview image"
-                                                >
-                                                    <ImageIcon className="w-4 h-4" />
-                                                </button>
                                             </div>
-
-                                            {/* Image URL Input */}
-                                            <AnimatePresence>
-                                                {isEditingImage && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, y: -10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        exit={{ opacity: 0, y: -10 }}
-                                                        className="absolute inset-x-2 top-12 z-20"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <input
-                                                            type="url"
-                                                            value={customImageUrl}
-                                                            onChange={(e) => setCustomImageUrl(e.target.value)}
-                                                            placeholder="Paste image URL..."
-                                                            className="w-full px-3 py-2 rounded-lg bg-background/90 border border-surface-elevated/50 shadow-lg text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-primary backdrop-blur-md"
-                                                            autoFocus
+                                        ) : (
+                                            // Actual Preview
+                                            <>
+                                                {/* Thumbnail */}
+                                                <div className="relative aspect-video bg-surface-elevated overflow-hidden">
+                                                    {(customImageUrl || preview?.image) ? (
+                                                        <Image
+                                                            src={customImageUrl || preview?.image || ''}
+                                                            alt={preview?.title || 'Link Preview'}
+                                                            fill
+                                                            className="object-cover"
+                                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                                            unoptimized={(customImageUrl || preview?.image || '').startsWith('/api/proxy-image')}
                                                         />
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                            {/* Media type badge */}
-                                            <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 backdrop-blur-sm
-                                                ${preview.mediaType === 'video' ? 'bg-error/90 text-white' : ''}
-                                                ${preview.mediaType === 'image' ? 'bg-accent/90 text-white' : ''}
-                                                ${preview.mediaType === 'article' ? 'bg-primary/90 text-background' : ''}
-                                            `}>
-                                                {preview.mediaType === 'video' && <Video className="w-3 h-3" />}
-                                                {preview.mediaType === 'image' && <ImageIcon className="w-3 h-3" />}
-                                                {preview.mediaType === 'article' && <FileText className="w-3 h-3" />}
-                                                {preview.mediaType === 'article' ? 'Link' : preview.mediaType}
-                                            </div>
-                                        </div>
-                                        {/* Info */}
-                                        <div className="p-4">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                {preview.favicon && (
-                                                    <Image
-                                                        src={preview.favicon}
-                                                        alt=""
-                                                        width={16}
-                                                        height={16}
-                                                        className="rounded"
-                                                        unoptimized
-                                                    />
-                                                )}
-                                                <span className="text-xs text-foreground-muted">{preview.siteName}</span>
-                                            </div>
-                                            <h3 className="font-medium text-foreground line-clamp-2">{preview.title}</h3>
-                                            {preview.description && (
-                                                <p className="text-sm text-foreground-muted mt-1 line-clamp-2">{preview.description}</p>
-                                            )}
-                                        </div>
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-surface-elevated">
+                                                            <ImageIcon className="w-12 h-12 text-foreground-muted/20" />
+                                                        </div>
+                                                    )}
+
+
+                                                    {/* Media type badge */}
+                                                    {preview?.mediaType && (
+                                                        <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 backdrop-blur-sm
+                                                            ${preview.mediaType === 'video' ? 'bg-error/90 text-white' : ''}
+                                                            ${preview.mediaType === 'image' ? 'bg-accent/90 text-white' : ''}
+                                                            ${preview.mediaType === 'article' ? 'bg-primary/90 text-background' : ''}
+                                                        `}>
+                                                            {preview.mediaType === 'video' && <Video className="w-3 h-3" />}
+                                                            {preview.mediaType === 'image' && <ImageIcon className="w-3 h-3" />}
+                                                            {preview.mediaType === 'article' && <FileText className="w-3 h-3" />}
+                                                            {preview.mediaType === 'article' ? 'Link' : preview.mediaType}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* Info */}
+                                                <div className="p-4">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        {preview?.favicon && (
+                                                            <Image
+                                                                src={preview.favicon}
+                                                                alt=""
+                                                                width={16}
+                                                                height={16}
+                                                                className="rounded"
+                                                                unoptimized
+                                                            />
+                                                        )}
+                                                        <span className="text-xs text-foreground-muted">{preview?.siteName || 'No Site Name'}</span>
+                                                    </div>
+                                                    <h3 className="font-medium text-foreground line-clamp-2">{preview?.title || 'No Title'}</h3>
+                                                    {preview?.description && (
+                                                        <p className="text-sm text-foreground-muted mt-1 line-clamp-2">{preview.description}</p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
                                     </motion.div>
                                 )}
 
-                                {/* Personal Note (Collapsible) */}
-                                {preview && (
+                                {/* Personal Note (Collapsible) - Always show if URL is entered or loading */}
+                                {(url || isLoading || preview) && (
                                     <div className="space-y-2">
-                                        {!isNoteExpanded ? (
+                                        {!isNoteExpanded && !note ? (
                                             <button
                                                 onClick={() => setIsNoteExpanded(true)}
                                                 className="flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground transition-colors"
@@ -474,8 +493,8 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                     </div>
                                 )}
 
-                                {/* Tags */}
-                                {preview && (
+                                {/* Tags - Always show if URL is entered or loading */}
+                                {(url || isLoading || preview) && (
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-foreground-muted">Tags</label>
                                         <TagInput tags={tags} onChange={setTags} />
@@ -610,7 +629,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                     </button>
                                     <button
                                         onClick={() => handleSave(false)}
-                                        disabled={!preview || isLoading}
+                                        disabled={(!preview && !customImageUrl) || isLoading}
                                         className="px-5 py-2 text-sm font-medium bg-primary text-background rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center gap-2"
                                     >
                                         <Check className="w-4 h-4" />
