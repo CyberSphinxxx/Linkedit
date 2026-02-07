@@ -34,7 +34,7 @@ export default function ThemeStorePage() {
     };
 
     return (
-        <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+        <div className="min-h-screen text-foreground transition-colors duration-300">
             {/* Header */}
             <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-surface-elevated">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
@@ -143,12 +143,19 @@ export default function ThemeStorePage() {
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <button
+                                    <div
                                         onClick={() => handleApplyTheme(theme)}
-                                        className={`group relative w-full flex flex-col rounded-2xl border overflow-hidden transition-all duration-300 ${settings.theme === theme.id
+                                        className={`group relative w-full flex flex-col rounded-2xl border overflow-hidden transition-all duration-300 cursor-pointer ${settings.theme === theme.id
                                             ? 'border-primary ring-2 ring-primary/30 shadow-lg shadow-primary/20 scale-[1.02]'
                                             : 'border-surface-elevated hover:border-primary/50 hover:shadow-xl hover:-translate-y-1'
                                             }`}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                handleApplyTheme(theme);
+                                            }
+                                        }}
                                     >
                                         {/* Preview Area */}
                                         <div
@@ -228,7 +235,7 @@ export default function ThemeStorePage() {
                                                 )}
                                             </div>
                                         </div>
-                                    </button>
+                                    </div>
                                 </motion.div>
                             )
                         })}
