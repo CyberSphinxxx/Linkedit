@@ -21,6 +21,7 @@ interface CollectionsContextType {
     updateCollection: (id: string, updates: Partial<Collection>) => Promise<void>;
     removeCollection: (id: string) => Promise<void>;
     getCollection: (id: string) => Collection | undefined;
+    refreshCollections: () => Promise<void>;
 }
 
 const CollectionsContext = createContext<CollectionsContextType | null>(null);
@@ -35,42 +36,87 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
     // Fetch collections from Firestore
     const refreshCollections = useCallback(async () => {
         if (!user) {
-            setCollections([]);
+            // Guest mode: load from localStorage
+            try {
+                const stored = localStorage.getItem('linkedit_local_collections');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    const collections = parsed.map((col: any) => ({
+                        ...col,
+                        created_at: new Date(col.created_at)
+                    }));
+                    setCollections(collections);
+                } else {
+                    setCollections([]);
+                }
+            } catch {
+                setCollections([]);
+            }
             setIsLoading(false);
             return;
         }
 
         try {
+            // Check for GUEST local data to migrate (linkedit_local_collections, no user ID)
+            const guestStorageKey = 'linkedit_local_collections';
+            const guestStored = localStorage.getItem(guestStorageKey);
+
+            if (guestStored) {
+                try {
+                    const parsed = JSON.parse(guestStored);
+                    if (parsed.length > 0) {
+                        console.log(`[CollectionsContext] Migrating ${parsed.length} local collections to Firebase...`);
+
+                        let migrated = 0;
+                        for (const col of parsed) {
+                            try {
+                                const collectionToSave = {
+                                    ...col,
+                                    created_at: new Date(col.created_at)
+                                };
+                                const sanitizedCollection = removeUndefined(collectionToSave);
+                                await firestoreService.addCollection(user.uid, sanitizedCollection as unknown as Collection, col._id);
+                                migrated++;
+                            } catch (err) {
+                                console.warn(`[CollectionsContext] Failed to migrate collection: ${col.name}`, err);
+                            }
+                        }
+
+                        if (migrated > 0) {
+                            localStorage.removeItem(guestStorageKey);
+                            console.log(`[CollectionsContext] Successfully migrated ${migrated} collections. Local storage cleared.`);
+                        }
+                    }
+                } catch (err) {
+                    console.error("[CollectionsContext] Guest data migration failed", err);
+                }
+            }
+
+            // Check for user-specific localStorage (legacy migration)
+            const userStorageKey = `${STORAGE_KEY}_${user.uid}`;
             const fetched = await firestoreService.getCollections(user.uid);
 
-            // Check for migration needed
-            // If we have 0 collections in Firestore, check LocalStorage
             if (fetched.length === 0) {
-                const stored = localStorage.getItem(`${STORAGE_KEY}_${user.uid}`);
+                const stored = localStorage.getItem(userStorageKey);
                 if (stored) {
                     try {
                         const parsed = JSON.parse(stored);
                         const migratedCollections: Collection[] = [];
 
-                        // Migrate each local collection to Firestore
                         for (const col of parsed) {
-                            // Use existing ID to preserve link references
-                            // Ensure date strings are converted back to Dates for the object we use locally,
-                            // though firestoreService handles wrapping it for Firestore.
                             const collectionToSave = {
                                 ...col,
                                 created_at: new Date(col.created_at)
                             };
-
-                            await firestoreService.addCollection(user.uid, collectionToSave, col._id);
+                            const sanitizedCollection = removeUndefined(collectionToSave);
+                            await firestoreService.addCollection(user.uid, sanitizedCollection as unknown as Collection, col._id);
                             migratedCollections.push(collectionToSave);
                         }
 
-                        // If no local collections (empty array), create default
                         if (migratedCollections.length === 0) {
                             const defaults = DEFAULT_COLLECTIONS.map(c => ({
                                 ...c,
-                                _id: 'default_0', // or generate one? default_0 is used by app logic
+                                _id: 'default_0',
                                 created_at: new Date(),
                             }));
                             for (const d of defaults) {
@@ -81,22 +127,19 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
                             setCollections(migratedCollections);
                         }
 
-                        // Clear local storage after successful migration ??
-                        // Maybe keep it as backup for now, safe to ignore.
+                        // Clear legacy storage after migration
+                        localStorage.removeItem(userStorageKey);
                     } catch (err) {
                         console.error("Migration failed", err);
-                        // Fallback to defaults
                         const defaults = DEFAULT_COLLECTIONS.map(c => ({ ...c, _id: 'default_0', created_at: new Date() }));
-                        setCollections(defaults); // Optimistic
+                        setCollections(defaults);
                     }
                 } else {
-                    // No local storage, just create default
                     const defaults = DEFAULT_COLLECTIONS.map(c => ({
                         ...c,
                         _id: 'default_0',
                         created_at: new Date(),
                     }));
-                    // Check if default exists? No, fetched was 0.
                     for (const d of defaults) {
                         await firestoreService.addCollection(user.uid, d, d._id);
                     }
@@ -133,7 +176,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             // But we need to construct the object.
             name,
             icon: icon || 'folder',
-            color,
+            ...(color ? { color } : {}),
             created_at: new Date(),
         } as Collection; // Cast because _id is missing initially if we want Firestore to generate
 
@@ -144,7 +187,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
         // Wait, context expects Promise<Collection>.
         // I need the ID.
 
-        const id = await firestoreService.addCollection(user.uid, newCollection); // Returns ID
+        const id = await firestoreService.addCollection(user.uid, newCollection, newCollection._id); // Pass generated ID
         const finalCollection = { ...newCollection, _id: id };
 
         setCollections((prev) => [...prev, finalCollection]);
@@ -163,8 +206,20 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             prev.map((c) => (c._id === id ? { ...c, ...updates } : c))
         );
 
-        await firestoreService.updateCollection(user.uid, id, updates);
+        // Remove undefined values
+        const sanitizedUpdates = Object.fromEntries(
+            Object.entries(updates).filter(([_, v]) => v !== undefined)
+        );
+
+        await firestoreService.updateCollection(user.uid, id, sanitizedUpdates);
     }, [user]);
+
+    // Cleanup helper for migration - defined outside or inline
+    const removeUndefined = (obj: any) => {
+        return Object.fromEntries(
+            Object.entries(obj).filter(([_, v]) => v !== undefined)
+        );
+    };
 
     // Remove a collection
     const removeCollection = useCallback(async (id: string) => {
@@ -191,6 +246,7 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
                 updateCollection,
                 removeCollection,
                 getCollection,
+                refreshCollections,
             }}
         >
             {children}
