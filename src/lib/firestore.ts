@@ -8,9 +8,11 @@ import {
     query,
     orderBy,
     Timestamp,
+    setDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Link as LinkType } from '@/types/link';
+import { Collection as CollectionType } from '@/types/collection';
 
 // Get user's links collection reference
 const getUserLinksRef = (userId: string) =>
@@ -73,3 +75,73 @@ export async function toggleFavorite(
 ): Promise<void> {
     await updateLink(userId, linkId, { is_favorite: !isFavorite });
 }
+
+// --- Collections ---
+
+// Get user's collections reference
+const getUserCollectionsRef = (userId: string) =>
+    collection(db, 'users', userId, 'collections');
+
+// Convert Firestore doc to Collection type
+const docToCollection = (doc: { id: string; data: () => Record<string, unknown> }): CollectionType => {
+    const data = doc.data();
+    return {
+        _id: doc.id,
+        name: data.name as string,
+        icon: data.icon as string,
+        color: data.color as string,
+        created_at: (data.created_at as Timestamp)?.toDate() || new Date(),
+    };
+};
+
+// Get all collections for a user
+export async function getCollections(userId: string): Promise<CollectionType[]> {
+    const colsRef = getUserCollectionsRef(userId);
+    // Sort by created_at to maintain order
+    const q = query(colsRef, orderBy('created_at', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => docToCollection({ id: doc.id, data: () => doc.data() }));
+}
+
+// Add a new collection
+export async function addCollection(
+    userId: string,
+    collection: CollectionType,
+    customId?: string
+): Promise<string> {
+    const colsRef = getUserCollectionsRef(userId);
+    // Use custom ID if provided (for migration), otherwise let Firestore generate
+    const { _id, ...rest } = collection;
+
+    // Create the data object with timestamp
+    const data = {
+        ...rest,
+        created_at: collection.created_at ? Timestamp.fromDate(collection.created_at) : Timestamp.now(),
+    };
+
+    if (customId) {
+        const docRef = doc(colsRef, customId);
+        await setDoc(docRef, data);
+        return customId;
+    } else {
+        const docRef = await addDoc(colsRef, data);
+        return docRef.id;
+    }
+}
+
+// Update a collection
+export async function updateCollection(
+    userId: string,
+    collectionId: string,
+    updates: Partial<CollectionType>
+): Promise<void> {
+    const colRef = doc(db, 'users', userId, 'collections', collectionId);
+    await updateDoc(colRef, updates);
+}
+
+// Delete a collection
+export async function deleteCollection(userId: string, collectionId: string): Promise<void> {
+    const colRef = doc(db, 'users', userId, 'collections', collectionId);
+    await deleteDoc(colRef);
+}
+
