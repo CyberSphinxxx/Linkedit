@@ -73,6 +73,76 @@ export function convertBookmarksToLinks(bookmarks: ParsedBookmark[]): Omit<LinkT
 }
 
 // ============================================
+// JSON IMPORT PARSING
+// ============================================
+
+export function parseJSONExport(jsonString: string): LinkType[] {
+    try {
+        const data = JSON.parse(jsonString);
+
+        // Validate that it's an array
+        if (!Array.isArray(data)) {
+            throw new Error('Invalid format: JSON must contain an array of links');
+        }
+
+        // Validate each link has required fields
+        const validLinks: LinkType[] = [];
+        const errors: string[] = [];
+
+        data.forEach((item, index) => {
+            // Check required fields
+            if (!item.original_url || typeof item.original_url !== 'string') {
+                errors.push(`Link ${index + 1}: Missing or invalid 'original_url'`);
+                return;
+            }
+
+            if (!item.metadata || typeof item.metadata !== 'object') {
+                errors.push(`Link ${index + 1}: Missing or invalid 'metadata'`);
+                return;
+            }
+
+            if (!item.created_at) {
+                errors.push(`Link ${index + 1}: Missing 'created_at'`);
+                return;
+            }
+
+            // Construct a valid link object with defaults for missing optional fields
+            const link: LinkType = {
+                _id: item._id || `import-${Date.now()}-${index}`,
+                original_url: item.original_url,
+                metadata: {
+                    title: item.metadata.title || 'Untitled',
+                    description: item.metadata.description || '',
+                    thumbnail_image: item.metadata.thumbnail_image || '',
+                    site_name: item.metadata.site_name || new URL(item.original_url).hostname,
+                    favicon: item.metadata.favicon || `https://www.google.com/s2/favicons?domain=${new URL(item.original_url).hostname}`,
+                },
+                tags: Array.isArray(item.tags) ? item.tags : [],
+                media_type: item.media_type || 'article',
+                is_favorite: Boolean(item.is_favorite),
+                created_at: item.created_at,
+                collection: item.collection || item.collection_id,
+                note: item.note,
+            };
+
+            validLinks.push(link);
+        });
+
+        if (errors.length > 0 && validLinks.length === 0) {
+            throw new Error(`Invalid JSON structure:\n${errors.slice(0, 5).join('\n')}`);
+        }
+
+        return validLinks;
+    } catch (error) {
+        if (error instanceof SyntaxError) {
+            throw new Error('Invalid JSON file: Unable to parse JSON');
+        }
+        throw error;
+    }
+}
+
+
+// ============================================
 // EXPORT FUNCTIONS
 // ============================================
 
