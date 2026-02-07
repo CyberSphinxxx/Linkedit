@@ -9,6 +9,8 @@ Your **Second Brain for the Internet** - Save links, tag them, and find them ins
 
 ## Features
 
+- **Theme Engine** - Extensive theme library with live previews and background animations
+- **Favorites System** - Star your favorite themes for quick access in the appearance settings
 - **Auto-metadata extraction** - Thumbnails, titles, and descriptions pulled automatically
 - **Smart tagging** - Organize with custom tags
 - **Instant search** - Find anything in seconds
@@ -66,6 +68,7 @@ NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
+- **Library**: React 19
 - **Styling**: Tailwind CSS 4
 - **Authentication**: Firebase Auth (Google Sign-In)
 - **Database**: Firebase Firestore
