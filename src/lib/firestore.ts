@@ -9,6 +9,7 @@ import {
     orderBy,
     Timestamp,
     setDoc,
+    writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Link as LinkType } from '@/types/link';
@@ -143,5 +144,27 @@ export async function updateCollection(
 export async function deleteCollection(userId: string, collectionId: string): Promise<void> {
     const colRef = doc(db, 'users', userId, 'collections', collectionId);
     await deleteDoc(colRef);
+}
+
+// Delete all user data (links and collections)
+export async function deleteAllUserData(userId: string): Promise<void> {
+    const batch = writeBatch(db);
+
+    // 1. Get all links
+    const linksRef = getUserLinksRef(userId);
+    const linksSnapshot = await getDocs(linksRef);
+    linksSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    // 2. Get all collections
+    const colsRef = getUserCollectionsRef(userId);
+    const colsSnapshot = await getDocs(colsRef);
+    colsSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    // Commit batch
+    await batch.commit();
 }
 
