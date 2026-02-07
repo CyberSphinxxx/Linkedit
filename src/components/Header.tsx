@@ -10,20 +10,22 @@ import { Plus, Settings } from 'lucide-react';
 
 interface HeaderProps {
     searchBar?: React.ReactNode;
+    actions?: React.ReactNode;
     onAddClick?: () => void;
 }
 
-export default function Header({ searchBar, onAddClick }: HeaderProps) {
+export default function Header({ searchBar, actions, onAddClick }: HeaderProps) {
     const { user, loading, signOut } = useAuth();
     const { settings } = useSettings();
     const pathname = usePathname();
     const router = useRouter();
     const isLoggedIn = !!user;
     const isOnDashboard = pathname === '/dashboard';
+    const isLandingPage = pathname === '/';
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const logoHref = isLoggedIn ? '/dashboard' : '/';
+    const logoHref = '/dashboard'; // Always simplify navigation to app core, Landing page has its own distinctive feel checking pathname anyway
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -42,8 +44,8 @@ export default function Header({ searchBar, onAddClick }: HeaderProps) {
     }, [isDropdownOpen]);
 
     const handleCollectionClick = () => {
-        if (!isLoggedIn) router.push('/login');
-        else if (!isOnDashboard) router.push('/dashboard');
+        // Guests can access collections too
+        if (!isOnDashboard) router.push('/dashboard');
     };
 
     const handleSettingsClick = () => {
@@ -61,7 +63,9 @@ export default function Header({ searchBar, onAddClick }: HeaderProps) {
         <header className={`${settings.stickyHeader ? 'sticky top-0' : 'relative'} z-50 w-full transition-all duration-300 pointer-events-none`}>
             {/* The Floating Pill Header */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pointer-events-auto">
-                <div className="w-full h-16 sm:h-20 rounded-2xl bg-surface/80 backdrop-blur-2xl border border-white/10 shadow-2xl flex items-center justify-between gap-4 px-4 sm:px-6 transition-all duration-300">
+                <div className="relative w-full h-16 sm:h-20 rounded-2xl bg-surface/80 backdrop-blur-2xl border border-white/10 shadow-2xl flex items-center justify-between gap-4 px-4 sm:px-6 transition-all duration-300">
+
+
 
                     {/* Logo Section */}
                     <Link href={logoHref} className="flex items-center gap-3 group shrink-0">
@@ -89,6 +93,13 @@ export default function Header({ searchBar, onAddClick }: HeaderProps) {
 
                     {/* Right Actions */}
                     <div className="flex items-center gap-3 shrink-0">
+                        {/* Custom Actions - Moved before Add button for better flow */}
+                        {actions && (
+                            <div className="flex items-center gap-2">
+                                {actions}
+                            </div>
+                        )}
+
                         {/* Add Link Button */}
                         {onAddClick && (
                             <button
@@ -102,7 +113,7 @@ export default function Header({ searchBar, onAddClick }: HeaderProps) {
 
                         {/* Navigation Items */}
                         <nav className="flex items-center gap-1 hidden md:flex">
-                            {!isOnDashboard && (
+                            {!isOnDashboard && !isLandingPage && (
                                 <button
                                     onClick={handleCollectionClick}
                                     className="px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-white/5 rounded-xl transition-all"
@@ -116,56 +127,58 @@ export default function Header({ searchBar, onAddClick }: HeaderProps) {
                         {!isOnDashboard && <div className="h-8 w-px bg-white/10 hidden sm:block mx-1"></div>}
 
                         {/* User Profile */}
-                        {loading ? (
-                            <div className="w-10 h-10 rounded-full bg-surface-elevated animate-pulse border border-white/5" />
-                        ) : isLoggedIn ? (
-                            <div className="relative" ref={dropdownRef}>
-                                <button
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className={`flex items-center justify-center p-0.5 rounded-full transition-all duration-300 ring-2 ${isDropdownOpen ? 'ring-primary border-transparent' : 'ring-transparent hover:ring-white/20'}`}
-                                >
-                                    {user?.photoURL ? (
-                                        <Image
-                                            src={user.photoURL}
-                                            alt={user.displayName || 'User'}
-                                            width={40}
-                                            height={40}
-                                            className="rounded-full border border-white/10"
-                                        />
-                                    ) : (
-                                        <div className="w-10 h-10 rounded-full bg-surface-elevated flex items-center justify-center text-primary text-sm font-bold border border-white/10 hover:border-primary/50 transition-colors">
-                                            {user?.displayName?.[0] || user?.email?.[0] || 'U'}
-                                        </div>
-                                    )}
-                                </button>
+                        {/* User Profile / Guest Menu */}
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className={`flex items-center justify-center p-0.5 rounded-full transition-all duration-300 ring-2 ${isDropdownOpen ? 'ring-primary border-transparent' : 'ring-transparent hover:ring-white/20'}`}
+                            >
+                                {loading ? (
+                                    <div className="w-10 h-10 rounded-full bg-surface-elevated animate-pulse border border-white/5" />
+                                ) : isLoggedIn && user?.photoURL ? (
+                                    <Image
+                                        src={user.photoURL}
+                                        alt={user.displayName || 'User'}
+                                        width={40}
+                                        height={40}
+                                        className="rounded-full border border-white/10"
+                                    />
+                                ) : (
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border border-white/10 transition-colors ${isLoggedIn ? 'bg-surface-elevated text-primary hover:border-primary/50' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:border-amber-500/50'}`}>
+                                        {isLoggedIn ? (user?.displayName?.[0] || user?.email?.[0] || 'U') : 'G'}
+                                    </div>
+                                )}
+                            </button>
 
-                                {/* Floating Dropdown Menu */}
-                                {isDropdownOpen && (
-                                    <div className="absolute right-0 top-full mt-4 w-60 p-2 bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right z-50">
+                            {/* Floating Dropdown Menu */}
+                            {isDropdownOpen && (
+                                <div className="absolute right-0 top-full mt-4 w-64 p-2 bg-surface/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right z-50">
 
-                                        {/* User Info Header */}
-                                        <div className="px-4 py-3 mb-2 bg-surface-elevated/50 rounded-xl border border-white/5">
-                                            <p className="text-sm font-bold text-foreground truncate">
-                                                {user?.displayName || 'User'}
-                                            </p>
-                                            <p className="text-xs text-foreground-muted truncate mt-0.5 opacity-80">
-                                                {user?.email}
-                                            </p>
-                                        </div>
+                                    {/* User/Guest Info Header */}
+                                    <div className="px-4 py-3 mb-2 bg-surface-elevated/50 rounded-xl border border-white/5">
+                                        <p className="text-sm font-bold text-foreground truncate flex items-center gap-2">
+                                            {isLoggedIn ? (user?.displayName || 'User') : (
+                                                <>
+                                                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                                    Guest Session
+                                                </>
+                                            )}
+                                        </p>
+                                        <p className="text-xs text-foreground-muted truncate mt-0.5 opacity-80">
+                                            {isLoggedIn ? user?.email : 'Data saved locally'}
+                                        </p>
+                                    </div>
 
-                                        <div className="space-y-1">
-                                            {/* Settings button removed from here since it's now in the header bar, 
-                                                but can keep it for mobile or just keep it as duplicate? 
-                                                Let's keep it but maybe rename "Settings" to "Preferences" or just keep as is.
-                                                Actually, redundancy is fine for dropdowns. */}
-                                            <button
-                                                onClick={handleSettingsClick}
-                                                className="w-full px-3 py-2.5 text-left text-sm text-foreground-muted hover:text-foreground hover:bg-white/5 rounded-xl transition-all flex items-center gap-3 group"
-                                            >
-                                                <Settings className="w-4.5 h-4.5 group-hover:text-primary transition-colors" />
-                                                Settings
-                                            </button>
+                                    <div className="space-y-1">
+                                        <button
+                                            onClick={handleSettingsClick}
+                                            className="w-full px-3 py-2.5 text-left text-sm text-foreground-muted hover:text-foreground hover:bg-white/5 rounded-xl transition-all flex items-center gap-3 group"
+                                        >
+                                            <Settings className="w-4.5 h-4.5 group-hover:text-primary transition-colors" />
+                                            Settings
+                                        </button>
 
+                                        {isLoggedIn ? (
                                             <button
                                                 onClick={handleSignOut}
                                                 className="w-full px-3 py-2.5 text-left text-sm text-error/80 hover:text-error hover:bg-error/10 rounded-xl transition-all flex items-center gap-3 group"
@@ -175,18 +188,23 @@ export default function Header({ searchBar, onAddClick }: HeaderProps) {
                                                 </svg>
                                                 Sign Out
                                             </button>
-                                        </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => router.push('/login')}
+                                                className="w-full px-3 py-2.5 text-left text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-all flex items-center gap-3 group mt-1"
+                                            >
+                                                <div className="w-4.5 h-4.5 flex items-center justify-center">
+                                                    <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24">
+                                                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                                    </svg>
+                                                </div>
+                                                Sync to Cloud
+                                            </button>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        ) : (
-                            <Link
-                                href="/login"
-                                className="px-6 py-2.5 text-sm font-bold rounded-xl bg-primary text-background hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20"
-                            >
-                                Sign In
-                            </Link>
-                        )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
