@@ -8,7 +8,8 @@ import LinkCard from '@/components/LinkCard';
 import LinkListItem from '@/components/LinkListItem';
 import SearchBar from '@/components/SearchBar';
 import TagSidebar from '@/components/TagSidebar';
-import AddLinkModal from '@/components/AddLinkModal';
+import dynamic from 'next/dynamic';
+const AddLinkModal = dynamic(() => import('@/components/AddLinkModal'), { ssr: false });
 import Header from '@/components/Header';
 import StatsCard from '@/components/StatsCard';
 import AddLinkArea from '@/components/AddLinkArea';
@@ -443,11 +444,13 @@ export default function Dashboard() {
             )}
 
             {/* Add Link Modal */}
-            <AddLinkModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSave={handleSaveLink}
-            />
+            {isModalOpen && (
+                <AddLinkModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={handleSaveLink}
+                />
+            )}
         </div>
     );
 }
