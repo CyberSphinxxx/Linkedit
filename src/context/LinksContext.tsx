@@ -12,6 +12,7 @@ import {
 import { Link as LinkType } from '@/types/link';
 import { useAuth } from './AuthContext';
 import * as firestoreService from '@/lib/firestore';
+import * as localStorageService from '@/lib/localStorage';
 
 interface LinksContextType {
     links: LinkType[];
@@ -46,24 +47,58 @@ export function LinksProvider({ children }: { children: ReactNode }) {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedMediaType, setSelectedMediaType] = useState<string | null>(null);
     const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+    const [allTags, setAllTags] = useState<{ name: string; count: number }[]>([]);
 
     // Clear error
     const clearError = useCallback(() => setError(null), []);
 
+    // Helper to determine service
+    const getService = useCallback(() => {
+        return user ? firestoreService : localStorageService;
+    }, [user]);
+
     // Fetch links when user changes - wrapped in useCallback
     const refreshLinks = useCallback(async () => {
-        if (!user) {
-            setLinks([]);
-            setIsLoading(false);
-            return;
-        }
-
         setIsLoading(true);
         setError(null);
 
         try {
-            const userLinks = await firestoreService.getLinks(user.uid);
-            setLinks(userLinks);
+            if (user) {
+                // Check for local data to migrate when user signs in
+                const localLinks = localStorageService.getLinks();
+
+                if (localLinks.length > 0) {
+                    console.log(`[LinksContext] Migrating ${localLinks.length} local links to Firebase...`);
+
+                    // Migrate each local link to Firestore
+                    let migrated = 0;
+                    for (const link of localLinks) {
+                        try {
+                            // Remove _id to let Firestore generate a new one
+                            const { _id, ...linkData } = link;
+                            await firestoreService.addLink(user.uid, linkData);
+                            migrated++;
+                        } catch (err) {
+                            // Skip duplicates or errors, continue with next link
+                            console.warn(`[LinksContext] Failed to migrate link: ${link.original_url}`, err);
+                        }
+                    }
+
+                    // Clear localStorage after successful migration
+                    if (migrated > 0) {
+                        localStorage.removeItem('linkedit_local_links');
+                        console.log(`[LinksContext] Successfully migrated ${migrated} links. Local storage cleared.`);
+                    }
+                }
+
+                // Fetch all links from Firestore (includes migrated data)
+                const userLinks = await firestoreService.getLinks(user.uid);
+                setLinks(userLinks);
+            } else {
+                // Local storage for guests
+                const localLinks = localStorageService.getLinks();
+                setLinks(localLinks);
+            }
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to load links';
             setError(message);
@@ -75,16 +110,48 @@ export function LinksProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         refreshLinks();
+        // Reset filters on auth change? Maybe not needed, but good practice
+        setSelectedCollection(null);
     }, [refreshLinks]);
+
+    // Recalculate tags whenever links change
+    useEffect(() => {
+        const tagCounts: Record<string, number> = {};
+        links.forEach((link) => {
+            link.tags.forEach((tag) => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            });
+        });
+        const tags = Object.entries(tagCounts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+        setAllTags(tags);
+    }, [links]);
+
 
     // Add a new link - wrapped in useCallback
     const addLink = useCallback(async (link: Omit<LinkType, '_id'>) => {
-        if (!user) throw new Error('Must be logged in to add links');
-
         try {
-            const newId = await firestoreService.addLink(user.uid, link);
-            const newLink: LinkType = { ...link, _id: newId };
-            setLinks((prev) => [newLink, ...prev]);
+            if (user) {
+                const newId = await firestoreService.addLink(user.uid, link);
+                const newLink: LinkType = { ...link, _id: newId };
+                setLinks((prev) => [newLink, ...prev]);
+            } else {
+                const newId = localStorageService.addLink(link);
+                // localStorageService.addLink returns the ID, but also updates storage.
+                // We need to update state to reflect change immediately without refetch
+                // But wait, localStorageService.addLink already creates the object with ID and Date.
+                // We should construct it here similarly for optimistic update, or just refetch?
+                // Since it's local, refetch is cheap, but state update is smoother.
+                // Let's manually construct for state update to allow animation/immediate feedback.
+
+                const newLink: LinkType = {
+                    ...link,
+                    _id: newId,
+                    created_at: new Date()
+                };
+                setLinks((prev) => [newLink, ...prev]);
+            }
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to add link';
             console.error('Error adding link:', err);
@@ -94,10 +161,12 @@ export function LinksProvider({ children }: { children: ReactNode }) {
 
     // Remove a link - wrapped in useCallback
     const removeLink = useCallback(async (id: string) => {
-        if (!user) throw new Error('Must be logged in to remove links');
-
         try {
-            await firestoreService.deleteLink(user.uid, id);
+            if (user) {
+                await firestoreService.deleteLink(user.uid, id);
+            } else {
+                localStorageService.deleteLink(id);
+            }
             setLinks((prev) => prev.filter((link) => link._id !== id));
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to remove link';
@@ -108,10 +177,12 @@ export function LinksProvider({ children }: { children: ReactNode }) {
 
     // Update a link - wrapped in useCallback
     const updateLink = useCallback(async (id: string, updates: Partial<LinkType>) => {
-        if (!user) throw new Error('Must be logged in to update links');
-
         try {
-            await firestoreService.updateLink(user.uid, id, updates);
+            if (user) {
+                await firestoreService.updateLink(user.uid, id, updates);
+            } else {
+                localStorageService.updateLink(id, updates);
+            }
             setLinks((prev) =>
                 prev.map((link) =>
                     link._id === id ? { ...link, ...updates } : link
@@ -125,20 +196,21 @@ export function LinksProvider({ children }: { children: ReactNode }) {
     }, [user]);
 
     // Toggle favorite - wrapped in useCallback
-    // Uses functional update to avoid stale closure on `links`
     const toggleFavorite = useCallback(async (id: string) => {
-        if (!user) throw new Error('Must be logged in to toggle favorite');
-
-        // Get current favorite status from state functionally
         let currentIsFavorite = false;
         setLinks((prev) => {
             const link = prev.find((l) => l._id === id);
             if (link) currentIsFavorite = link.is_favorite;
-            return prev; // Don't modify, just read
+            return prev;
         });
 
         try {
-            await firestoreService.toggleFavorite(user.uid, id, currentIsFavorite);
+            if (user) {
+                await firestoreService.toggleFavorite(user.uid, id, currentIsFavorite);
+            } else {
+                localStorageService.toggleFavorite(id, currentIsFavorite);
+            }
+
             setLinks((prev) =>
                 prev.map((l) =>
                     l._id === id ? { ...l, is_favorite: !l.is_favorite } : l
@@ -149,7 +221,7 @@ export function LinksProvider({ children }: { children: ReactNode }) {
             console.error('Error toggling favorite:', err);
             throw new Error(message);
         }
-    }, [user]); // Removed `links` dependency - no more stale closure
+    }, [user]);
 
     // Filter links based on search, tag, and media type
     const filteredLinks = useMemo(() => {
@@ -185,20 +257,7 @@ export function LinksProvider({ children }: { children: ReactNode }) {
         });
     }, [links, searchQuery, selectedTags, selectedMediaType, selectedCollection]);
 
-    // Get all unique tags with counts
-    const allTags = useMemo(() => {
-        const tagCounts: Record<string, number> = {};
-        links.forEach((link) => {
-            link.tags.forEach((tag) => {
-                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-            });
-        });
-        return Object.entries(tagCounts)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count);
-    }, [links]);
-
-    // Memoize context value to prevent unnecessary re-renders
+    // Memoize context value
     const contextValue = useMemo(() => ({
         links,
         filteredLinks,
