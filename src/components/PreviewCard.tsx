@@ -131,7 +131,7 @@ export default function PreviewCard({
                     <div className="flex gap-3">
                         <button
                             onClick={handleConfirm}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent text-background font-medium text-sm transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
+                            className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm transition-all hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(var(--primary),0.3)] hover:scale-[1.02] active:scale-[0.98]"
                         >
                             Save Link
                         </button>
