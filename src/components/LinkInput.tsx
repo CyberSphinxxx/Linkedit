@@ -80,10 +80,8 @@ export default function LinkInput({ onSave }: LinkInputProps) {
     };
 
     const handleConfirm = (tags: string[]) => {
-        if (!user) {
-            setShowLoginPrompt(true);
-            return;
-        }
+        // Allow guests to save (LinksContext handles storage)
+        // if (!user) { setShowLoginPrompt(true); return; }
 
         if (preview) {
             const newLink: Omit<LinkType, '_id'> = {
