@@ -14,76 +14,89 @@ export async function extractDominantColor(imageUrl: string): Promise<string | n
             return;
         }
 
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
+        const loadImage = (url: string, isRetry = false) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
 
-        img.onload = () => {
-            try {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        resolve(null);
+                        return;
+                    }
+
+                    // Sample a small version for performance
+                    const sampleSize = 50;
+                    canvas.width = sampleSize;
+                    canvas.height = sampleSize;
+
+                    ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+
+                    const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
+                    const data = imageData.data;
+
+                    // Calculate average color (skip very dark/light pixels)
+                    let r = 0, g = 0, b = 0, count = 0;
+
+                    for (let i = 0; i < data.length; i += 4) {
+                        const red = data[i];
+                        const green = data[i + 1];
+                        const blue = data[i + 2];
+                        const alpha = data[i + 3];
+
+                        // Skip transparent pixels
+                        if (alpha < 128) continue;
+
+                        // Skip very dark or very light pixels
+                        const brightness = (red + green + blue) / 3;
+                        if (brightness < 20 || brightness > 235) continue;
+
+                        r += red;
+                        g += green;
+                        b += blue;
+                        count++;
+                    }
+
+                    if (count === 0) {
+                        resolve(null);
+                        return;
+                    }
+
+                    r = Math.round(r / count);
+                    g = Math.round(g / count);
+                    b = Math.round(b / count);
+
+                    // Boost saturation for more vibrant glow
+                    const [h, s, l] = rgbToHsl(r, g, b);
+                    const boostedS = Math.min(s * 1.3, 1);
+                    const [newR, newG, newB] = hslToRgb(h, boostedS, l);
+
+                    resolve(rgbToHex(newR, newG, newB));
+                } catch {
                     resolve(null);
-                    return;
                 }
+            };
 
-                // Sample a small version for performance
-                const sampleSize = 50;
-                canvas.width = sampleSize;
-                canvas.height = sampleSize;
-
-                ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
-
-                const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
-                const data = imageData.data;
-
-                // Calculate average color (skip very dark/light pixels)
-                let r = 0, g = 0, b = 0, count = 0;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    const red = data[i];
-                    const green = data[i + 1];
-                    const blue = data[i + 2];
-                    const alpha = data[i + 3];
-
-                    // Skip transparent pixels
-                    if (alpha < 128) continue;
-
-                    // Skip very dark or very light pixels
-                    const brightness = (red + green + blue) / 3;
-                    if (brightness < 20 || brightness > 235) continue;
-
-                    r += red;
-                    g += green;
-                    b += blue;
-                    count++;
-                }
-
-                if (count === 0) {
+            img.onerror = () => {
+                if (!isRetry && !url.includes('/_next/image')) {
+                    // Fallback to Next.js proxy
+                    // We use a small width (64) to fetch a small version, which is enough for color extraction
+                    const proxyUrl = `/_next/image?url=${encodeURIComponent(imageUrl)}&w=64&q=75`;
+                    loadImage(proxyUrl, true);
+                } else {
                     resolve(null);
-                    return;
                 }
+            };
 
-                r = Math.round(r / count);
-                g = Math.round(g / count);
-                b = Math.round(b / count);
+            // Timeout for slow images
+            setTimeout(() => resolve(null), 5000);
 
-                // Boost saturation for more vibrant glow
-                const [h, s, l] = rgbToHsl(r, g, b);
-                const boostedS = Math.min(s * 1.3, 1);
-                const [newR, newG, newB] = hslToRgb(h, boostedS, l);
-
-                resolve(rgbToHex(newR, newG, newB));
-            } catch {
-                resolve(null);
-            }
+            img.src = url;
         };
 
-        img.onerror = () => resolve(null);
-
-        // Timeout for slow images
-        setTimeout(() => resolve(null), 5000);
-
-        img.src = imageUrl;
+        loadImage(imageUrl);
     });
 }
 
