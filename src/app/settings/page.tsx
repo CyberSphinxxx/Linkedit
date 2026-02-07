@@ -15,11 +15,15 @@ import {
 import {
     parseBookmarksHTML,
     convertBookmarksToLinks,
+    parseJSONExport,
     exportAsJSON,
     exportAsHTML,
     findDuplicateLinks,
     checkBrokenLinks,
 } from '@/lib/dataManagement';
+import { deleteAllUserData } from '@/lib/firestore';
+import { useCollections } from '@/context/CollectionsContext';
+import { useAuth } from '@/context/AuthContext';
 import packageInfo from '../../../package.json';
 
 type SettingsTab = 'appearance' | 'layout' | 'data' | 'about';
@@ -34,7 +38,9 @@ const tabs: { id: SettingsTab; label: string; icon: React.ReactNode; description
 export default function SettingsPage() {
     const router = useRouter();
     const { settings, updateSettings, resetSettings } = useSettings();
-    const { links, addLink, removeLink } = useLinks();
+    const { links, addLink, removeLink, refreshLinks } = useLinks();
+    const { refreshCollections } = useCollections();
+    const { user } = useAuth();
     const { showToast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +48,19 @@ export default function SettingsPage() {
     const [isImporting, setIsImporting] = useState(false);
     const [isCheckingBrokenLinks, setIsCheckingBrokenLinks] = useState(false);
     const [brokenLinksProgress, setBrokenLinksProgress] = useState<{ checked: number; total: number } | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
+    const [isDeletingData, setIsDeletingData] = useState(false);
+    const [storageUsage, setStorageUsage] = useState<number>(0);
+
+    // Calculate storage usage on mount
+    React.useEffect(() => {
+        if (!user) {
+            import('@/lib/localStorage').then(mod => {
+                setStorageUsage(mod.getStorageUsage());
+            });
+        }
+    }, [user, links]); // Recalculate when links change
 
     // Import handlers
     const handleImportClick = () => fileInputRef.current?.click();
@@ -52,30 +71,58 @@ export default function SettingsPage() {
 
         setIsImporting(true);
         try {
-            const html = await file.text();
-            const bookmarks = parseBookmarksHTML(html);
+            const content = await file.text();
+            const isJSON = file.name.endsWith('.json');
 
-            if (bookmarks.length === 0) {
-                showToast('No bookmarks found in file', 'error');
-                return;
-            }
+            if (isJSON) {
+                // Handle JSON import
+                const linksToAdd = parseJSONExport(content);
 
-            const linksToAdd = convertBookmarksToLinks(bookmarks);
-            let added = 0;
-
-            for (const link of linksToAdd) {
-                try {
-                    await addLink(link);
-                    added++;
-                } catch {
-                    // Skip duplicates or errors
+                if (linksToAdd.length === 0) {
+                    showToast('No links found in JSON file', 'error');
+                    return;
                 }
-            }
 
-            showToast(`Imported ${added} of ${linksToAdd.length} bookmarks`, 'success');
+                let added = 0;
+                for (const link of linksToAdd) {
+                    try {
+                        // Remove _id to let the context generate a new one (avoid conflicts)
+                        const { _id, ...linkData } = link;
+                        await addLink(linkData);
+                        added++;
+                    } catch {
+                        // Skip duplicates or errors
+                    }
+                }
+
+                showToast(`Imported ${added} of ${linksToAdd.length} links from JSON`, 'success');
+            } else {
+                // Handle HTML bookmarks import
+                const bookmarks = parseBookmarksHTML(content);
+
+                if (bookmarks.length === 0) {
+                    showToast('No bookmarks found in file', 'error');
+                    return;
+                }
+
+                const linksToAdd = convertBookmarksToLinks(bookmarks);
+                let added = 0;
+
+                for (const link of linksToAdd) {
+                    try {
+                        await addLink(link);
+                        added++;
+                    } catch {
+                        // Skip duplicates or errors
+                    }
+                }
+
+                showToast(`Imported ${added} of ${linksToAdd.length} bookmarks`, 'success');
+            }
         } catch (error) {
             console.error('Import error:', error);
-            showToast('Failed to import bookmarks', 'error');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to import file';
+            showToast(errorMessage, 'error');
         } finally {
             setIsImporting(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -117,6 +164,25 @@ export default function SettingsPage() {
         }
 
         showToast(`Removed ${removed} duplicate links`, 'success');
+    };
+
+    const handleDeleteAllData = async () => {
+        if (!user || deleteConfirmationText !== 'DELETE ALL DATA') return;
+
+        setIsDeletingData(true);
+        try {
+            await deleteAllUserData(user.uid);
+            await refreshLinks();
+            await refreshCollections();
+            showToast('All data deleted successfully', 'success');
+            setIsDeleteModalOpen(false);
+            setDeleteConfirmationText('');
+        } catch (error) {
+            console.error('Delete all data error:', error);
+            showToast('Failed to delete data', 'error');
+        } finally {
+            setIsDeletingData(false);
+        }
     };
 
     const handleDeleteBrokenLinks = async () => {
@@ -706,6 +772,38 @@ export default function SettingsPage() {
                                         </div>
                                     </section>
 
+                                    {!user && (
+                                        <>
+                                            <div className="border-t border-surface-elevated" />
+                                            <section>
+                                                <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                                                    <Database size={20} className="text-warning" />
+                                                    Local Storage
+                                                </h2>
+                                                <div className="p-5 rounded-xl border border-surface-elevated bg-surface-elevated/30">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-sm font-medium text-foreground">Storage Used</span>
+                                                        <span className="text-sm font-bold text-foreground">
+                                                            {((storageUsage || 0) / 1024 / 1024).toFixed(2)} MB <span className="text-foreground-muted font-normal">/ 5.0 MB</span>
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-surface-elevated rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full transition-all ${(storageUsage || 0) > 4.5 * 1024 * 1024 ? 'bg-error' :
+                                                                (storageUsage || 0) > 3 * 1024 * 1024 ? 'bg-warning' : 'bg-success'
+                                                                }`}
+                                                            style={{ width: `${Math.min(((storageUsage || 0) / (5 * 1024 * 1024)) * 100, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <div className="mt-3 text-xs text-foreground-muted flex items-start gap-2">
+                                                        <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                                                        <p>Data is saved only on this device. Clear your browser data to remove it, or Export as JSON to back it up.</p>
+                                                    </div>
+                                                </div>
+                                            </section>
+                                        </>
+                                    )}
+
                                     <div className="border-t border-surface-elevated" />
 
                                     <section>
@@ -725,15 +823,15 @@ export default function SettingsPage() {
                                             )}
                                             <div className="text-left">
                                                 <div className="font-medium text-foreground">
-                                                    {isImporting ? 'Importing...' : 'Import browser bookmarks'}
+                                                    {isImporting ? 'Importing...' : 'Import Data'}
                                                 </div>
-                                                <div className="text-sm text-foreground-muted">Upload HTML bookmarks file</div>
+                                                <div className="text-sm text-foreground-muted">Upload HTML bookmarks or JSON export</div>
                                             </div>
                                         </button>
                                         <input
                                             ref={fileInputRef}
                                             type="file"
-                                            accept=".html,.htm"
+                                            accept=".html,.htm,.json"
                                             onChange={handleFileChange}
                                             className="hidden"
                                         />
@@ -802,7 +900,88 @@ export default function SettingsPage() {
                                             </div>
                                         </button>
                                     </section>
+
+                                    <div className="border-t border-surface-elevated" />
+
+                                    <section>
+                                        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                                            <Trash2 size={20} className="text-error" />
+                                            Danger Zone
+                                        </h2>
+                                        <button
+                                            onClick={() => setIsDeleteModalOpen(true)}
+                                            className="w-full flex items-center gap-3 p-4 rounded-xl border border-error/20 bg-error/5 hover:bg-error/10 hover:border-error/50 transition-all text-left group"
+                                        >
+                                            <Trash2 size={24} className="text-error" />
+                                            <div>
+                                                <div className="font-medium text-error group-hover:text-red-500 transition-colors">Delete all data</div>
+                                                <div className="text-sm text-foreground-muted">Permanently delete all links and collections</div>
+                                            </div>
+                                        </button>
+                                    </section>
                                 </>
+                            )}
+
+                            {/* Delete Confirmation Modal */}
+                            {isDeleteModalOpen && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="w-full max-w-md bg-surface border border-surface-elevated rounded-2xl shadow-xl overflow-hidden"
+                                    >
+                                        <div className="p-6 space-y-4">
+                                            <div className="flex items-center gap-3 text-error">
+                                                <AlertTriangle className="w-8 h-8" />
+                                                <h3 className="text-xl font-bold">Delete All Data?</h3>
+                                            </div>
+
+                                            <p className="text-foreground-muted">
+                                                This action cannot be undone. This will permanently delete your:
+                                            </p>
+                                            <ul className="list-disc list-inside text-sm text-foreground-muted ml-2 space-y-1">
+                                                <li>All saved links</li>
+                                                <li>All collections</li>
+                                                <li>All associated metadata</li>
+                                            </ul>
+
+                                            <div className="space-y-2 pt-2">
+                                                <label className="text-sm font-medium text-foreground">
+                                                    Type <span className="font-mono font-bold select-all">DELETE ALL DATA</span> to confirm:
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={deleteConfirmationText}
+                                                    onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                                                    placeholder="DELETE ALL DATA"
+                                                    className="w-full px-3 py-2 rounded-lg bg-background border border-surface-elevated focus:border-error focus:ring-1 focus:ring-error outline-none font-mono text-sm"
+                                                    autoFocus
+                                                />
+                                            </div>
+
+                                            <div className="flex justify-end gap-3 pt-4">
+                                                <button
+                                                    onClick={() => {
+                                                        setIsDeleteModalOpen(false);
+                                                        setDeleteConfirmationText('');
+                                                    }}
+                                                    disabled={isDeletingData}
+                                                    className="px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-elevated rounded-lg transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handleDeleteAllData}
+                                                    disabled={deleteConfirmationText !== 'DELETE ALL DATA' || isDeletingData}
+                                                    className="px-4 py-2 text-sm font-medium bg-error text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                                >
+                                                    {isDeletingData && <Loader2 className="w-4 h-4 animate-spin" />}
+                                                    Delete Everything
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </div>
                             )}
 
                             {/* About Tab */}
@@ -895,16 +1074,27 @@ export default function SettingsPage() {
                                             <div className="flex-1">
                                                 <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">Connect</h4>
                                                 <div className="flex gap-3">
-                                                    <a href="https://twitter.com/CyberSphinxxx" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
-                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                                                        </svg>
-                                                    </a>
-                                                    <a href="mailto:contact@johnlemargonzales.com" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                    {/* Email */}
+                                                    <a href="mailto:johnlemargonzales@gmail.com" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                                         </svg>
                                                     </a>
+
+                                                    {/* Discord */}
+                                                    <a href="https://discord.com/invite/74jFFFgjNT" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path fillRule="evenodd" d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.772-.6083 1.1588a18.2915 18.2915 0 00-7.651 0 11.898 11.898 0 00-.613-1.1588.077.077 0 00-.0793-.0371 19.7038 19.7038 0 00-4.8852 1.5152.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1569 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </a>
+
+                                                    {/* LinkedIn */}
+                                                    <a href="https://www.linkedin.com/in/john-lemar-gonzales-28011b28b" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path fillRule="evenodd" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </a>
+
                                                     <a href="https://github.com/CyberSphinxxx" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
                                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                             <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
