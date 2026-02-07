@@ -1,24 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Link as LinkType } from '@/types/link';
-import YouTubeModal from './YouTubeModal';
-import ImageLightbox from './ImageLightbox';
-import EditLinkModal from './EditLinkModal';
-import LinkDetailsModal from './LinkDetailsModal';
 import { parseYouTubeId } from '@/lib/scraper';
 import { isDirectImage, getHostname, getFaviconUrl } from '@/lib/utils';
 import { useLinks } from '@/context/LinksContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useToast } from '@/components/Toast';
-import { Info, ExternalLink, Heart, Edit2, Trash2, MoreHorizontal, Play } from 'lucide-react';
+import { Info, ExternalLink, Heart, Edit2, Trash2, Play } from 'lucide-react';
+
+// Lazy load heavy modals
+const YouTubeModal = dynamic(() => import('./YouTubeModal'), { ssr: false });
+const ImageLightbox = dynamic(() => import('./ImageLightbox'), { ssr: false });
+const EditLinkModal = dynamic(() => import('./EditLinkModal'), { ssr: false });
+const LinkDetailsModal = dynamic(() => import('./LinkDetailsModal'), { ssr: false });
 
 interface LinkCardProps {
     link: LinkType;
 }
 
-export default function LinkCard({ link }: LinkCardProps) {
+const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
     const [showYouTubeModal, setShowYouTubeModal] = useState(false);
     const [showLightbox, setShowLightbox] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -104,8 +107,9 @@ export default function LinkCard({ link }: LinkCardProps) {
                         alt={link.metadata.title || 'Link preview'}
                         fill
                         className={`object-cover ${settings.reduceMotion ? '' : 'transition-transform duration-500'} ${hoverScaleClass}`}
-                        unoptimized
                         onError={() => setImageError(true)}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        unoptimized={thumbnailSrc.startsWith('/api/proxy-image')}
                     />
 
                     {/* Hover Overlay (Darken) */}
@@ -135,7 +139,7 @@ export default function LinkCard({ link }: LinkCardProps) {
                             ${link.media_type === 'video' ? 'bg-error text-white' : ''}
                             ${link.media_type === 'image' ? 'bg-accent text-white' : ''}
                         `}>
-                            {link.media_type}
+                            {link.media_type === 'article' ? 'link' : link.media_type}
                         </span>
                     </div>
 
@@ -252,17 +256,23 @@ export default function LinkCard({ link }: LinkCardProps) {
                 />
             )}
 
-            <EditLinkModal
-                link={link}
-                isOpen={showEditModal}
-                onClose={() => setShowEditModal(false)}
-            />
+            {showEditModal && (
+                <EditLinkModal
+                    link={link}
+                    isOpen={showEditModal}
+                    onClose={() => setShowEditModal(false)}
+                />
+            )}
 
-            <LinkDetailsModal
-                link={link}
-                isOpen={showDetailsModal}
-                onClose={() => setShowDetailsModal(false)}
-            />
+            {showDetailsModal && (
+                <LinkDetailsModal
+                    link={link}
+                    isOpen={showDetailsModal}
+                    onClose={() => setShowDetailsModal(false)}
+                />
+            )}
         </>
     );
-}
+});
+
+export default LinkCard;
