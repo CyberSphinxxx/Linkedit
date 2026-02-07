@@ -10,7 +10,7 @@ import { useToast } from '@/components/Toast';
 import {
     ArrowLeft, Grid3X3, List, LayoutGrid, LayoutList,
     ExternalLink, Zap, Download, Upload, Trash2, Copy, FileJson, FileText, Loader2,
-    AlertTriangle, Palette, Settings2, Database, PlusCircle, Check, PanelTop, ShoppingBag
+    AlertTriangle, Palette, Settings2, Database, PlusCircle, Check, PanelTop, ShoppingBag, Info, Heart
 } from 'lucide-react';
 import {
     parseBookmarksHTML,
@@ -20,13 +20,15 @@ import {
     findDuplicateLinks,
     checkBrokenLinks,
 } from '@/lib/dataManagement';
+import packageInfo from '../../../package.json';
 
-type SettingsTab = 'appearance' | 'layout' | 'data';
+type SettingsTab = 'appearance' | 'layout' | 'data' | 'about';
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode; description: string }[] = [
     { id: 'appearance', label: 'Appearance', icon: <Palette size={20} />, description: 'Theme & visual settings' },
     { id: 'layout', label: 'Layout', icon: <LayoutGrid size={20} />, description: 'Grid & card preferences' },
     { id: 'data', label: 'Data & Import', icon: <Database size={20} />, description: 'Export, import, cleanup' },
+    { id: 'about', label: 'About', icon: <Info size={20} />, description: 'Version & developer info' },
 ];
 
 export default function SettingsPage() {
@@ -159,7 +161,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen">
             {/* Header */}
             <header className="sticky top-0 z-10 bg-surface/80 backdrop-blur-md border-b border-surface-elevated">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
@@ -287,6 +289,58 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Favorites Section */}
+                                        {settings.favoriteThemes && settings.favoriteThemes.length > 0 && (
+                                            <div className="mb-6 animate-slide-up">
+                                                <h3 className="text-sm font-medium text-foreground-muted uppercase tracking-wider mb-3 flex items-center gap-2">
+                                                    <Heart size={14} className="text-primary fill-primary/20" />
+                                                    Favorites
+                                                </h3>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                    {settings.favoriteThemes.map(id => {
+                                                        const t = getThemeById(id);
+                                                        if (!t) return null;
+                                                        return (
+                                                            <button
+                                                                key={id}
+                                                                onClick={() => updateSettings({ theme: id as any })}
+                                                                className={`group relative flex items-center gap-4 p-4 rounded-2xl border transition-all text-left overflow-hidden ${settings.theme === id
+                                                                    ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                                                                    : 'border-surface-elevated hover:border-primary/50 hover:bg-surface-elevated'
+                                                                    }`}
+                                                            >
+                                                                <div
+                                                                    className="w-12 h-12 rounded-xl shadow-sm flex items-center justify-center flex-shrink-0"
+                                                                    style={{ background: t.previewColor }}
+                                                                >
+                                                                    {React.cloneElement(t.icon as any, {
+                                                                        size: 24,
+                                                                        className: `drop-shadow-md ${t.colorScheme === 'light' ? 'text-black/70' : 'text-white'}`
+                                                                    })}
+                                                                </div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="font-bold text-base text-foreground leading-tight mb-0.5">{t.label}</div>
+                                                                    <div className="text-xs text-foreground-muted opacity-70 group-hover:opacity-100 transition-opacity">
+                                                                        {t.description}
+                                                                    </div>
+                                                                </div>
+                                                                {settings.theme === id && (
+                                                                    <div className="absolute right-3 top-3 w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(0,240,255,0.8)]" />
+                                                                )}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                    <button
+                                                        onClick={() => router.push('/themes')}
+                                                        className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-surface-elevated hover:border-foreground-muted/50 hover:bg-surface-elevated/50 transition-all text-foreground-muted hover:text-foreground h-full min-h-[80px]"
+                                                    >
+                                                        <PlusCircle size={24} />
+                                                        <span className="text-sm font-medium">Add More</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </section>
 
                                     <div className="border-t border-surface-elevated" />
@@ -750,15 +804,134 @@ export default function SettingsPage() {
                                     </section>
                                 </>
                             )}
+
+                            {/* About Tab */}
+                            {activeTab === 'about' && (
+                                <div className="space-y-6">
+                                    <div className="flex flex-col items-center justify-center p-8 bg-surface-elevated/30 rounded-2xl border border-surface-elevated text-center relative overflow-hidden">
+                                        {/* Background decoration */}
+                                        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+
+                                        <div className="w-24 h-24 bg-gradient-to-br from-surface-elevated to-surface border border-white/10 rounded-2xl flex items-center justify-center shadow-xl mb-6 relative z-10">
+                                            <svg className="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                            </svg>
+                                        </div>
+
+                                        <h3 className="text-3xl font-bold text-foreground mb-2 relative z-10">Linkedit</h3>
+                                        <p className="text-foreground-muted mb-6 relative z-10">v{packageInfo.version || '0.1.0'}</p>
+
+                                        <div className="flex flex-wrap justify-center gap-2 relative z-10 mb-8">
+                                            <span className="px-3 py-1 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted">Next.js 15</span>
+                                            <span className="px-3 py-1 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted">React 19</span>
+                                            <span className="px-3 py-1 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted">Tailwind CSS</span>
+                                            <span className="px-3 py-1 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted">TypeScript</span>
+                                            <span className="px-3 py-1 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted">Firebase</span>
+                                            <span className="px-3 py-1 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted">Framer Motion</span>
+                                            <span className="px-3 py-1 rounded-full bg-surface-elevated border border-white/5 text-xs font-medium text-foreground-muted">Lucide Icons</span>
+                                        </div>
+
+                                        <div className="flex gap-3 relative z-10">
+                                            <a
+                                                href="https://github.com/sponsors/CyberSphinxxx"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary text-primary font-medium hover:bg-primary/10 transition-all hover:scale-105"
+                                            >
+                                                <Heart size={16} className="fill-current" />
+                                                Sponsor
+                                            </a>
+                                            <a
+                                                href="https://github.com/CyberSphinxxx/Linkedit"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-elevated hover:bg-surface-elevated/80 border border-white/5 text-foreground font-medium transition-all"
+                                            >
+                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                                                </svg>
+                                                Star Repo
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Github & Issues links */}
+                                        <a
+                                            href="https://github.com/CyberSphinxxx/Linkedit/issues"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex flex-col gap-1 p-4 rounded-xl border border-surface-elevated hover:border-warning/50 hover:bg-surface-elevated/50 transition-all group"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 text-foreground font-medium">
+                                                    <AlertTriangle size={20} />
+                                                    Report an Issue
+                                                </div>
+                                                <ExternalLink size={16} className="text-foreground-muted group-hover:text-warning transition-colors" />
+                                            </div>
+                                            <span className="text-sm text-foreground-muted">Found a bug? Let us know!</span>
+                                        </a>
+
+                                        <a
+                                            href="https://github.com/CyberSphinxxx/Linkedit/releases"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex flex-col gap-1 p-4 rounded-xl border border-surface-elevated hover:border-success/50 hover:bg-surface-elevated/50 transition-all group"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 text-foreground font-medium">
+                                                    <List size={20} />
+                                                    Changelog & Releases
+                                                </div>
+                                                <ExternalLink size={16} className="text-foreground-muted group-hover:text-success transition-colors" />
+                                            </div>
+                                            <span className="text-sm text-foreground-muted">See what's new in v{packageInfo.version}</span>
+                                        </a>
+                                    </div>
+
+                                    <div className="p-6 rounded-xl border border-surface-elevated bg-surface-elevated/20">
+                                        <div className="flex flex-col md:flex-row gap-8 justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">Connect</h4>
+                                                <div className="flex gap-3">
+                                                    <a href="https://twitter.com/CyberSphinxxx" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                                                        </svg>
+                                                    </a>
+                                                    <a href="mailto:contact@johnlemargonzales.com" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </a>
+                                                    <a href="https://github.com/CyberSphinxxx" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">Credits</h4>
+                                                <div className="grid grid-cols-1 gap-2 text-sm">
+                                                    <div>
+                                                        <div className="text-foreground-muted mb-1">Created & Developed by</div>
+                                                        <div className="font-medium text-foreground text-base">John Lemar Gonzales</div>
+                                                        <div className="text-xs text-primary mt-0.5">@CyberSphinxxx</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </motion.div>
 
-                        {/* Footer */}
-                        <p className="text-center text-sm text-foreground-muted mt-6">
-                            Settings are saved automatically to your browser
-                        </p>
+
                     </div>
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }
