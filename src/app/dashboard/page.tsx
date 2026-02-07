@@ -22,7 +22,9 @@ import { useToast } from '@/components/Toast';
 import { useKeyboardShortcut } from '@/hooks';
 import { Link as LinkType } from '@/types/link';
 import CollectionSwitcher from '@/components/CollectionSwitcher';
-import { Link2, Video, Image, Grid3X3, List, ArrowUpDown, Sparkles, Search, Hash } from 'lucide-react';
+import CollectionsGrid from '@/components/CollectionsGrid';
+import { useCollections } from '@/context/CollectionsContext';
+import { Link2, Video, Image, Grid3X3, List, ArrowUpDown, Sparkles, Search, Hash, LayoutGrid } from 'lucide-react';
 
 type SortOption = 'newest' | 'oldest' | 'alphabetical' | 'favorites';
 type ViewMode = 'grid' | 'list';
@@ -43,8 +45,10 @@ export default function Dashboard() {
         error,
         refreshLinks,
         clearError,
+        setSelectedCollection,
     } = useLinks();
 
+    const { collections } = useCollections();
     const { user, loading: authLoading } = useAuth();
     const { settings } = useSettings();
     const router = useRouter();
@@ -52,6 +56,7 @@ export default function Dashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('newest');
     const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView);
+    const [showCollectionsGrid, setShowCollectionsGrid] = useState(false);
     const [showSortDropdown, setShowSortDropdown] = useState(false);
 
     // Open modal function
@@ -92,12 +97,14 @@ export default function Dashboard() {
         }
     }, [filteredLinks, sortBy]);
 
-    // Redirect if not logged in
+    // Redirect if not logged in - REMOVED for Guest Mode
+    /*
     useEffect(() => {
         if (!authLoading && !user) {
             router.push('/login');
         }
     }, [user, authLoading, router]);
+    */
 
     // Show error toast when links fail to load
     useEffect(() => {
@@ -126,10 +133,10 @@ export default function Dashboard() {
         );
     }
 
-    // Don't render if not authenticated
-    if (!user) {
-        return null;
-    }
+    // Don't render if not authenticated - REMOVED for Guest Mode
+    // if (!user) {
+    //     return null;
+    // }
 
     const patternClasses: Record<string, string> = {
         grid: 'bg-pattern-grid',
@@ -152,6 +159,19 @@ export default function Dashboard() {
                         onChange={setSearchQuery}
                         placeholder="Search by title or tag..."
                     />
+                }
+                actions={
+                    <button
+                        onClick={() => setShowCollectionsGrid(!showCollectionsGrid)}
+                        className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${showCollectionsGrid
+                            ? 'bg-primary/20 text-primary border-primary/20'
+                            : 'bg-transparent text-foreground-muted hover:text-foreground hover:bg-white/5 border-transparent hover:border-white/10'
+                            }`}
+                        title={showCollectionsGrid ? "View Links" : "View Collections"}
+                    >
+                        <LayoutGrid className="w-4 h-4" />
+                        <span className="hidden lg:inline">{showCollectionsGrid ? 'Links' : 'Collections'}</span>
+                    </button>
                 }
             />
 
@@ -211,106 +231,115 @@ export default function Dashboard() {
                                 <div>
                                     <div className="flex items-center gap-4 mb-1">
                                         <h1 className="text-2xl font-bold text-foreground">
-                                            Your Links
+                                            {showCollectionsGrid ? 'Your Collections' : 'Your Links'}
                                         </h1>
-                                        <CollectionSwitcher />
+                                        {!showCollectionsGrid && <CollectionSwitcher />}
                                     </div>
                                     <p className="text-sm text-foreground-muted">
-                                        {filteredLinks.length} link{filteredLinks.length !== 1 ? 's' : ''}
-                                        {searchQuery && ` matching "${searchQuery}"`}
+                                        {showCollectionsGrid
+                                            ? `${collections.length} collection${collections.length !== 1 ? 's' : ''}`
+                                            : `${filteredLinks.length} link${filteredLinks.length !== 1 ? 's' : ''}`
+                                        }
+                                        {!showCollectionsGrid && searchQuery && ` matching "${searchQuery}"`}
                                     </p>
                                 </div>
 
                                 <div className="relative z-30 flex items-center gap-3 sm:gap-4">
-                                    {/* Media type filter */}
-                                    <div className="flex items-center gap-1.5 p-1 rounded-xl bg-surface-elevated/50 border border-surface-elevated overflow-hidden">
-                                        {['all', 'video', 'image', 'article'].map((type) => (
-                                            <button
-                                                key={type}
-                                                onClick={() => setSelectedMediaType(type === 'all' ? null : type)}
-                                                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${(type === 'all' && !selectedMediaType) || selectedMediaType === type
-                                                    ? 'bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                                                    : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated'
-                                                    }`}
-                                            >
-                                                {type === 'all' ? 'All' : type === 'article' ? 'Links' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    {/* Collections toggle moved to header */}
 
-                                    {/* Divider */}
-                                    <div className="h-6 w-px bg-surface-elevated hidden sm:block" />
+                                    {!showCollectionsGrid && (
+                                        <>
+                                            {/* Media type filter */}
+                                            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-surface-elevated/50 border border-surface-elevated overflow-hidden">
+                                                {['all', 'video', 'image', 'article'].map((type) => (
+                                                    <button
+                                                        key={type}
+                                                        onClick={() => setSelectedMediaType(type === 'all' ? null : type)}
+                                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${(type === 'all' && !selectedMediaType) || selectedMediaType === type
+                                                            ? 'bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                                            : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated'
+                                                            }`}
+                                                    >
+                                                        {type === 'all' ? 'All' : type === 'article' ? 'Links' : type.charAt(0).toUpperCase() + type.slice(1) + 's'}
+                                                    </button>
+                                                ))}
+                                            </div>
 
-                                    {/* Sort & View Controls */}
-                                    <div className="flex items-center gap-2">
-                                        {/* Sort dropdown */}
-                                        <div className="relative">
-                                            <button
-                                                onClick={() => setShowSortDropdown(!showSortDropdown)}
-                                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-surface-elevated/50 border border-surface-elevated text-foreground-muted hover:text-foreground hover:bg-surface-elevated transition-colors"
-                                            >
-                                                <ArrowUpDown className="w-3.5 h-3.5" />
-                                                <span className="hidden sm:inline">
-                                                    {sortBy === 'newest' ? 'Newest' : sortBy === 'oldest' ? 'Oldest' : sortBy === 'favorites' ? 'Favorites' : 'A-Z'}
-                                                </span>
-                                            </button>
-                                            {showSortDropdown && (
-                                                <>
-                                                    <div className="fixed inset-0 z-10" onClick={() => setShowSortDropdown(false)} />
-                                                    <div className="absolute right-0 top-full mt-2 p-1 bg-surface border border-surface-elevated rounded-xl shadow-xl z-20 min-w-[140px] animate-in fade-in zoom-in-95 duration-200">
-                                                        {[
-                                                            { value: 'favorites', label: 'Favorites First' },
-                                                            { value: 'newest', label: 'Newest First' },
-                                                            { value: 'oldest', label: 'Oldest First' },
-                                                            { value: 'alphabetical', label: 'Alphabetical' },
-                                                        ].map((option) => (
-                                                            <button
-                                                                key={option.value}
-                                                                onClick={() => { setSortBy(option.value as SortOption); setShowSortDropdown(false); }}
-                                                                className={`w-full px-3 py-2 text-xs text-left transition-colors flex items-center gap-2 rounded-lg ${sortBy === option.value ? 'bg-primary/10 text-primary font-medium' : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated'
-                                                                    }`}
-                                                            >
-                                                                {sortBy === option.value && (
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                                                )}
-                                                                {option.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
+                                            {/* Divider */}
+                                            {/* Sort & View Controls */}
+                                            <div className="flex items-center gap-2">
+                                                {/* View Mode Toggle (Grid/List) */}
+                                                <div className="flex items-center p-1 rounded-lg bg-surface-elevated/50 border border-surface-elevated">
+                                                    <button
+                                                        onClick={() => setViewMode('grid')}
+                                                        className={`p-1.5 rounded-md transition-all ${viewMode === 'grid'
+                                                            ? 'bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                                            : 'text-foreground-muted hover:text-foreground'
+                                                            }`}
+                                                        title="Grid view"
+                                                    >
+                                                        <Grid3X3 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setViewMode('list')}
+                                                        className={`p-1.5 rounded-md transition-all ${viewMode === 'list'
+                                                            ? 'bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                                                            : 'text-foreground-muted hover:text-foreground'
+                                                            }`}
+                                                        title="List view"
+                                                    >
+                                                        <List className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
 
-                                        {/* View toggle */}
-                                        <div className="flex items-center p-1 rounded-lg bg-surface-elevated/50 border border-surface-elevated">
-                                            <button
-                                                onClick={() => setViewMode('grid')}
-                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid'
-                                                    ? 'bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                                                    : 'text-foreground-muted hover:text-foreground'
-                                                    }`}
-                                                title="Grid view"
-                                            >
-                                                <Grid3X3 className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setViewMode('list')}
-                                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list'
-                                                    ? 'bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
-                                                    : 'text-foreground-muted hover:text-foreground'
-                                                    }`}
-                                                title="List view"
-                                            >
-                                                <List className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
+                                                <div className="h-6 w-px bg-surface-elevated hidden sm:block" />
+
+                                                {/* Sort dropdown */}
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setShowSortDropdown(!showSortDropdown)}
+                                                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-surface-elevated/50 border border-surface-elevated text-foreground-muted hover:text-foreground hover:bg-surface-elevated transition-colors"
+                                                    >
+                                                        <ArrowUpDown className="w-3.5 h-3.5" />
+                                                        <span className="hidden sm:inline">
+                                                            {sortBy === 'newest' ? 'Newest' : sortBy === 'oldest' ? 'Oldest' : sortBy === 'favorites' ? 'Favorites' : 'A-Z'}
+                                                        </span>
+                                                    </button>
+                                                    {showSortDropdown && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-10" onClick={() => setShowSortDropdown(false)} />
+                                                            <div className="absolute right-0 top-full mt-2 p-1 bg-surface border border-surface-elevated rounded-xl shadow-xl z-20 min-w-[140px] animate-in fade-in zoom-in-95 duration-200">
+                                                                {[
+                                                                    { value: 'favorites', label: 'Favorites First' },
+                                                                    { value: 'newest', label: 'Newest First' },
+                                                                    { value: 'oldest', label: 'Oldest First' },
+                                                                    { value: 'alphabetical', label: 'Alphabetical' },
+                                                                ].map((option) => (
+                                                                    <button
+                                                                        key={option.value}
+                                                                        onClick={() => { setSortBy(option.value as SortOption); setShowSortDropdown(false); }}
+                                                                        className={`w-full px-3 py-2 text-xs text-left transition-colors flex items-center gap-2 rounded-lg ${sortBy === option.value ? 'bg-primary/10 text-primary font-medium' : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated'
+                                                                            }`}
+                                                                    >
+                                                                        {sortBy === option.value && (
+                                                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                                                        )}
+                                                                        {option.label}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Active Tags Row */}
                             {selectedTags.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-wrap gap-2 mb-4">
                                     {selectedTags.map(tag => (
                                         <button
                                             key={tag}
@@ -327,27 +356,38 @@ export default function Dashboard() {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Clear filters */}
+                            {(searchQuery || selectedTags.length > 0 || selectedMediaType) && (
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedTags([]);
+                                        setSelectedMediaType(null);
+                                    }}
+                                    className="mb-4 text-sm text-primary hover:underline"
+                                >
+                                    Clear all filters
+                                </button>
+                            )}
+
+                            {/* Loading state */}
                         </div>
 
-                        {/* Clear filters */}
-                        {(searchQuery || selectedTags.length > 0 || selectedMediaType) && (
-                            <button
-                                onClick={() => {
-                                    setSearchQuery('');
-                                    setSelectedTags([]);
-                                    setSelectedMediaType(null);
-                                }}
-                                className="mb-4 text-sm text-primary hover:underline"
-                            >
-                                Clear all filters
-                            </button>
-                        )}
-
-                        {/* Loading state */}
                         {isLoading ? (
                             <div className="flex items-center justify-center py-16">
                                 <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
                             </div>
+                        ) : showCollectionsGrid ? (
+                            <FeatureErrorBoundary featureName="Collections Grid">
+                                <CollectionsGrid
+                                    collections={collections}
+                                    onSelectCollection={(id) => {
+                                        setSelectedCollection(id);
+                                        setShowCollectionsGrid(false);
+                                    }}
+                                />
+                            </FeatureErrorBoundary>
                         ) : sortedLinks.length > 0 ? (
                             <FeatureErrorBoundary featureName="Links Grid" onReset={refreshLinks}>
                                 {viewMode === 'grid' ? (
@@ -432,25 +472,29 @@ export default function Dashboard() {
                         )}
                     </main>
                 </div>
-            </div>
+            </div >
 
             {/* Floating Action Button - Visible if enabled in settings */}
-            {settings.showFloatingAddButton && (
-                <FloatingActionButton
-                    onClick={openAddModal}
-                    label="Add Link"
-                    shortcutHint="N"
-                />
-            )}
+            {
+                settings.showFloatingAddButton && (
+                    <FloatingActionButton
+                        onClick={openAddModal}
+                        label="Add Link"
+                        shortcutHint="N"
+                    />
+                )
+            }
 
             {/* Add Link Modal */}
-            {isModalOpen && (
-                <AddLinkModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={handleSaveLink}
-                />
-            )}
-        </div>
+            {
+                isModalOpen && (
+                    <AddLinkModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        onSave={handleSaveLink}
+                    />
+                )
+            }
+        </div >
     );
 }
