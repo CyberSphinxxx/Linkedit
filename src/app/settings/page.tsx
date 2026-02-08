@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useSettings, CardDensity, DefaultView } from '@/context/SettingsContext';
 import { THEMES, getThemeById, type ThemeId } from '@/lib/themes';
 import { useLinks } from '@/context/LinksContext';
@@ -10,7 +10,7 @@ import { useToast } from '@/components/Toast';
 import {
     ArrowLeft, Grid3X3, List, LayoutGrid, LayoutList,
     ExternalLink, Zap, Download, Upload, Trash2, Copy, FileJson, FileText, Loader2,
-    AlertTriangle, Palette, Settings2, Database, PlusCircle, Check, PanelTop, ShoppingBag, Info, Heart
+    AlertTriangle, Palette, Settings2, Database, PlusCircle, Check, PanelTop, ShoppingBag, Info, Heart, Menu, X
 } from 'lucide-react';
 import {
     parseBookmarksHTML,
@@ -45,6 +45,7 @@ export default function SettingsPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
     const [isCheckingBrokenLinks, setIsCheckingBrokenLinks] = useState(false);
     const [brokenLinksProgress, setBrokenLinksProgress] = useState<{ checked: number; total: number } | null>(null);
@@ -229,34 +230,83 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen">
             {/* Header */}
-            <header className="sticky top-0 z-10 bg-surface/80 backdrop-blur-md border-b border-surface-elevated">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
-                    <button
-                        onClick={() => router.push('/dashboard')}
-                        className="p-2 rounded-lg hover:bg-surface-elevated text-foreground-muted hover:text-foreground transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div>
-                        <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-                            <Settings2 size={24} className="text-primary" />
-                            Settings
-                        </h1>
-                        <p className="text-sm text-foreground-muted">Customize your experience</p>
+            <header className="sticky top-0 z-[100] bg-surface/80 backdrop-blur-md border-b border-surface-elevated">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => router.push('/dashboard')}
+                            className="p-2 rounded-lg hover:bg-surface-elevated text-foreground-muted hover:text-foreground transition-colors"
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+                        <div>
+                            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                                <Settings2 size={24} className="text-primary" />
+                                <span className="hidden xs:inline">Settings</span>
+                                <span className="xs:hidden">Settings</span>
+                            </h1>
+                            <p className="text-sm text-foreground-muted hidden sm:block">Customize your experience</p>
+                        </div>
                     </div>
+
+                    {/* Mobile Menu Toggle */}
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="lg:hidden p-2.5 rounded-xl bg-surface-elevated border border-white/5 text-primary shadow-sm hover:scale-110 active:scale-95 transition-all"
+                        aria-label="Toggle Menu"
+                    >
+                        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
                 </div>
+
+                {/* Mobile Menu Overlay */}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="lg:hidden absolute top-full left-0 right-0 bg-surface border-b border-surface-elevated overflow-hidden z-[99] shadow-2xl"
+                        >
+                            <div className="p-4 space-y-2 max-h-[70vh] overflow-y-auto">
+                                {tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            setIsMobileMenuOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-left transition-all ${activeTab === tab.id
+                                            ? 'bg-primary/10 text-primary border border-primary/20'
+                                            : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated border border-transparent'
+                                            }`}
+                                    >
+                                        <div className={`p-2.5 rounded-xl ${activeTab === tab.id ? 'bg-primary text-background' : 'bg-surface-elevated text-foreground-muted'}`}>
+                                            {React.cloneElement(tab.icon as any, { size: 24 })}
+                                        </div>
+                                        <div>
+                                            <div className={`font-bold text-base ${activeTab === tab.id ? 'text-primary' : 'text-foreground'}`}>{tab.label}</div>
+                                            <div className="text-xs opacity-70">{tab.description}</div>
+                                        </div>
+                                        {activeTab === tab.id && <Check size={18} className="ml-auto text-primary" />}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </header>
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar */}
-                    <nav className="lg:w-64 flex-shrink-0">
-                        <div className="lg:sticky lg:top-24 space-y-2">
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+                <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
+                    {/* Desktop Sidebar Navigation */}
+                    <nav className="hidden lg:block lg:w-64 flex-shrink-0">
+                        <div className="lg:sticky lg:top-24 space-y-2 text-primary">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${activeTab === tab.id
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all whitespace-nowrap min-w-max lg:min-w-0 ${activeTab === tab.id
                                         ? 'bg-primary/10 text-primary border border-primary/30'
                                         : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated border border-transparent'
                                         }`}
@@ -275,10 +325,10 @@ export default function SettingsPage() {
                     <div className="flex-1 min-w-0">
                         <motion.div
                             key={activeTab}
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="bg-surface border border-surface-elevated rounded-2xl p-6 space-y-8"
+                            className="bg-surface border border-surface-elevated rounded-2xl p-4 sm:p-6 space-y-6 sm:space-y-8"
                         >
                             {/* Appearance Tab */}
                             {activeTab === 'appearance' && (
@@ -326,11 +376,11 @@ export default function SettingsPage() {
                                                 </button>
                                             </div>
 
-                                            <div className="hidden sm:block w-px h-24 bg-surface-elevated mx-2" />
+                                            <div className="w-full sm:w-px h-px sm:h-24 bg-surface-elevated mx-0 sm:mx-2 my-4 sm:my-0" />
 
-                                            <div className="hidden sm:flex flex-col gap-2 min-w-[140px]">
-                                                <div className="text-xs font-medium text-foreground-muted uppercase tracking-wider mb-1">Quick Switch</div>
-                                                <div className="flex gap-2">
+                                            <div className="flex flex-col gap-2 min-w-0 sm:min-w-[140px] w-full sm:w-auto">
+                                                <div className="text-xs font-medium text-foreground-muted uppercase tracking-wider mb-1 text-center sm:text-left">Quick Switch</div>
+                                                <div className="flex justify-center sm:justify-start gap-3">
                                                     {['light', 'oled'].map(id => {
                                                         const t = getThemeById(id);
                                                         if (!t) return null;
@@ -339,14 +389,14 @@ export default function SettingsPage() {
                                                                 key={id}
                                                                 onClick={() => updateSettings({ theme: id as any })}
                                                                 title={t.label}
-                                                                className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${settings.theme === id
-                                                                    ? 'border-primary ring-2 ring-primary/20 scale-110'
+                                                                className={`w-12 h-12 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-all ${settings.theme === id
+                                                                    ? 'border-primary ring-2 ring-primary/20 scale-110 shadow-[0_0_15px_-3px_rgba(68,214,44,0.3)]'
                                                                     : 'border-surface-elevated hover:bg-surface-elevated hover:scale-105'
                                                                     }`}
                                                                 style={{ background: t.previewColor }}
                                                             >
                                                                 {React.cloneElement(t.icon as any, {
-                                                                    size: 16,
+                                                                    size: 18,
                                                                     className: `drop-shadow-md ${t.colorScheme === 'light' ? 'text-black/70' : 'text-white'}`
                                                                 })}
                                                             </button>
@@ -363,7 +413,7 @@ export default function SettingsPage() {
                                                     <Heart size={14} className="text-primary fill-primary/20" />
                                                     Favorites
                                                 </h3>
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                                                     {settings.favoriteThemes.map(id => {
                                                         const t = getThemeById(id);
                                                         if (!t) return null;
@@ -416,7 +466,7 @@ export default function SettingsPage() {
                                             <Grid3X3 size={20} className="text-primary" />
                                             Background Pattern
                                         </h2>
-                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
                                             {[
                                                 { id: 'grid', label: 'Grid', desc: 'Cyberpunk', class: 'bg-pattern-grid' },
                                                 { id: 'dots', label: 'Dots', desc: 'Minimal', class: 'bg-pattern-dots' },
@@ -495,7 +545,7 @@ export default function SettingsPage() {
                                         </h2>
                                         <div className="space-y-4">
                                             {/* Layout Style */}
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {[
                                                     { id: 'masonry', label: 'Masonry', desc: 'Pinterest Style', icon: <LayoutList size={20} /> },
                                                     { id: 'strict-grid', label: 'Strict Grid', desc: 'Uniform Squares', icon: <Grid3X3 size={20} /> },
@@ -597,7 +647,7 @@ export default function SettingsPage() {
                                             <LayoutGrid size={20} className="text-accent" />
                                             Card Density
                                         </h2>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             {[
                                                 { value: 'comfort' as CardDensity, label: 'Comfort', desc: 'Larger cards with more detail', icon: <LayoutGrid size={24} /> },
                                                 { value: 'compact' as CardDensity, label: 'Compact', desc: 'Smaller cards, more visible', icon: <LayoutList size={24} /> },
@@ -668,7 +718,7 @@ export default function SettingsPage() {
                                             <List size={20} className="text-success" />
                                             Default View
                                         </h2>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             {[
                                                 { value: 'grid' as DefaultView, label: 'Grid View', icon: <Grid3X3 size={24} /> },
                                                 { value: 'list' as DefaultView, label: 'List View', icon: <List size={24} /> },
@@ -1034,7 +1084,7 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                         {/* Github & Issues links */}
                                         <a
                                             href="https://github.com/CyberSphinxxx/Linkedit/issues"
@@ -1070,32 +1120,32 @@ export default function SettingsPage() {
                                     </div>
 
                                     <div className="p-6 rounded-xl border border-surface-elevated bg-surface-elevated/20">
-                                        <div className="flex flex-col md:flex-row gap-8 justify-between">
-                                            <div className="flex-1">
+                                        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-between">
+                                            <div className="flex-1 border-b sm:border-b-0 border-surface-elevated pb-6 sm:pb-0">
                                                 <h4 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">Connect</h4>
-                                                <div className="flex gap-3">
+                                                <div className="flex flex-wrap gap-3">
                                                     {/* Email */}
-                                                    <a href="mailto:johnlemargonzales@gmail.com" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                    <a href="mailto:johnlemargonzales@gmail.com" className="p-3 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]">
                                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                                         </svg>
                                                     </a>
 
                                                     {/* Discord */}
-                                                    <a href="https://discord.com/invite/74jFFFgjNT" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                    <a href="https://discord.com/invite/74jFFFgjNT" target="_blank" rel="noopener noreferrer" className="p-3 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]">
                                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                             <path fillRule="evenodd" d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.772-.6083 1.1588a18.2915 18.2915 0 00-7.651 0 11.898 11.898 0 00-.613-1.1588.077.077 0 00-.0793-.0371 19.7038 19.7038 0 00-4.8852 1.5152.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1569 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z" clipRule="evenodd" />
                                                         </svg>
                                                     </a>
 
                                                     {/* LinkedIn */}
-                                                    <a href="https://www.linkedin.com/in/john-lemar-gonzales-28011b28b" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                    <a href="https://www.linkedin.com/in/john-lemar-gonzales-28011b28b" target="_blank" rel="noopener noreferrer" className="p-3 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]">
                                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                             <path fillRule="evenodd" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" clipRule="evenodd" />
                                                         </svg>
                                                     </a>
 
-                                                    <a href="https://github.com/CyberSphinxxx" target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors">
+                                                    <a href="https://github.com/CyberSphinxxx" target="_blank" rel="noopener noreferrer" className="p-3 rounded-lg bg-surface-elevated hover:bg-primary/20 hover:text-primary transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]">
                                                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                             <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
                                                         </svg>
@@ -1117,11 +1167,9 @@ export default function SettingsPage() {
                                 </div>
                             )}
                         </motion.div>
-
-
                     </div>
                 </div>
-            </main >
-        </div >
+            </main>
+        </div>
     );
 }
