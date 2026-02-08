@@ -116,14 +116,14 @@ export default function LinkInput({ onSave }: LinkInputProps) {
             <div
                 className={`
           relative rounded-2xl p-[2px] transition-all duration-300
-          ${isFocused ? 'bg-gradient-to-r from-primary to-accent' : 'bg-surface-elevated'}
+          ${isFocused ? 'bg-primary' : 'bg-surface-elevated'}
         `}
             >
                 <div
                     className={`
             absolute inset-0 rounded-2xl blur-xl transition-opacity duration-300
-            bg-gradient-to-r from-primary to-accent
-            ${isFocused ? 'opacity-40' : 'opacity-0'}
+            bg-primary
+            ${isFocused ? 'opacity-30' : 'opacity-0'}
           `}
                 />
 
