@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import MasonryGrid from '@/components/MasonryGrid';
 import LinkCard from '@/components/LinkCard';
 import LinkListItem from '@/components/LinkListItem';
@@ -14,6 +14,7 @@ import Header from '@/components/Header';
 import StatsCard from '@/components/StatsCard';
 import AddLinkArea from '@/components/AddLinkArea';
 import FloatingActionButton from '@/components/FloatingActionButton';
+import ScrollToTopButton from '@/components/ScrollToTopButton';
 import { FeatureErrorBoundary } from '@/components/ErrorBoundary';
 import { useLinks } from '@/context/LinksContext';
 import { useAuth } from '@/context/AuthContext';
@@ -58,6 +59,27 @@ export default function Dashboard() {
     const [viewMode, setViewMode] = useState<ViewMode>(settings.defaultView);
     const [showCollectionsGrid, setShowCollectionsGrid] = useState(false);
     const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+    // Default to list view on mobile
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            setViewMode('list');
+        }
+    }, []);
+
+    // Back to top scroll logic
+    const [showBackToTop, setShowBackToTop] = useState(false);
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowBackToTop(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     // Open modal function
     const openAddModal = useCallback(() => setIsModalOpen(true), []);
@@ -203,9 +225,9 @@ export default function Dashboard() {
                         ))}
                 </div>
 
-                <div className="flex gap-8">
-                    {/* Sidebar */}
-                    <div data-sidebar>
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Sidebar - Hidden on mobile/tablet */}
+                    <div data-sidebar className="hidden lg:block">
                         <FeatureErrorBoundary featureName="Tags">
                             <TagSidebar
                                 tags={allTags}
@@ -224,16 +246,16 @@ export default function Dashboard() {
 
                     {/* Main content */}
                     <main className="flex-1 min-w-0">
-                        {/* Stats bar */}
-                        {/* Stats bar */}
+                        {/* Content header area */}
                         <div className="space-y-4 mb-6">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                {/* Title & Collection Switcher */}
                                 <div>
-                                    <div className="flex items-center gap-4 mb-1">
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-1">
                                         <h1 className="text-2xl font-bold text-foreground">
                                             {showCollectionsGrid ? 'Your Collections' : 'Your Links'}
                                         </h1>
-                                        {!showCollectionsGrid && <CollectionSwitcher />}
+                                        {!showCollectionsGrid && <CollectionSwitcher className="w-full sm:w-auto" />}
                                     </div>
                                     <p className="text-sm text-foreground-muted">
                                         {showCollectionsGrid
@@ -244,18 +266,19 @@ export default function Dashboard() {
                                     </p>
                                 </div>
 
-                                <div className="relative z-30 flex items-center gap-3 sm:gap-4">
+                                {/* Filters & Controls */}
+                                <div className="relative z-30 flex flex-wrap items-center gap-2 sm:gap-3">
                                     {/* Collections toggle moved to header */}
 
                                     {!showCollectionsGrid && (
                                         <>
                                             {/* Media type filter */}
-                                            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-surface-elevated/50 border border-surface-elevated overflow-hidden">
+                                            <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-xl bg-surface-elevated/50 border border-surface-elevated overflow-x-auto scrollbar-hide">
                                                 {['all', 'video', 'image', 'article'].map((type) => (
                                                     <button
                                                         key={type}
                                                         onClick={() => setSelectedMediaType(type === 'all' ? null : type)}
-                                                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${(type === 'all' && !selectedMediaType) || selectedMediaType === type
+                                                        className={`px-2 sm:px-3 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap ${(type === 'all' && !selectedMediaType) || selectedMediaType === type
                                                             ? 'bg-background text-foreground shadow-sm ring-1 ring-black/5 dark:ring-white/10'
                                                             : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated'
                                                             }`}
@@ -474,27 +497,26 @@ export default function Dashboard() {
                 </div>
             </div >
 
+            {/* Mobile Navigation Controls */}
+            <ScrollToTopButton show={showBackToTop} onClick={scrollToTop} />
+
             {/* Floating Action Button - Visible if enabled in settings */}
-            {
-                settings.showFloatingAddButton && (
-                    <FloatingActionButton
-                        onClick={openAddModal}
-                        label="Add Link"
-                        shortcutHint="N"
-                    />
-                )
-            }
+            {settings.showFloatingAddButton && (
+                <FloatingActionButton
+                    onClick={openAddModal}
+                    label="Add Link"
+                    shortcutHint="N"
+                />
+            )}
 
             {/* Add Link Modal */}
-            {
-                isModalOpen && (
-                    <AddLinkModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        onSave={handleSaveLink}
-                    />
-                )
-            }
-        </div >
+            {isModalOpen && (
+                <AddLinkModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={handleSaveLink}
+                />
+            )}
+        </div>
     );
 }
