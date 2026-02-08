@@ -20,7 +20,7 @@ const itemVariants = {
 
 export default function BentoGrid() {
     return (
-        <section className="py-24 px-6 max-w-7xl mx-auto">
+        <section className="py-12 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto">
             <motion.div
                 initial="hidden"
                 whileInView="visible"
@@ -28,11 +28,11 @@ export default function BentoGrid() {
                 variants={containerVariants}
                 className="space-y-4"
             >
-                <motion.h2 variants={itemVariants} className="text-3xl md:text-5xl font-bold text-center mb-16">
+                <motion.h2 variants={itemVariants} className="text-2xl sm:text-3xl md:text-5xl font-bold text-center mb-10 sm:mb-16">
                     Everything you need to <span className="text-gradient">curate your web</span>
                 </motion.h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-min md:auto-rows-[300px]">
                     {/* Card 1: Visual Previews (Large) */}
                     <motion.div
                         variants={itemVariants}
