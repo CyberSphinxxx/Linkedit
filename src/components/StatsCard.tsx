@@ -33,7 +33,7 @@ export default function StatsCard({ icon, label, value, color = 'primary', delay
             transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
             style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
             className={`
-        relative overflow-hidden rounded-xl p-4
+        relative overflow-hidden rounded-xl p-3 sm:p-4
         bg-surface
         backdrop-blur-sm
         hover:scale-[1.02] transition-transform
@@ -41,13 +41,13 @@ export default function StatsCard({ icon, label, value, color = 'primary', delay
         >
             <div className={`absolute inset-0 opacity-10 ${iconColorClasses[color].replace('text-', 'bg-')}`} />
             <div className={`absolute inset-0 border border-white/5 rounded-xl`} />
-            <div className="flex items-center gap-3">
-                <div className={`text-2xl ${iconColorClasses[color]}`}>
+            <div className="flex items-center gap-2 sm:gap-3">
+                <div className={`text-xl sm:text-2xl ${iconColorClasses[color]}`}>
                     {icon}
                 </div>
                 <div>
-                    <p className="text-2xl font-bold text-foreground">{value}</p>
-                    <p className="text-xs text-foreground-muted uppercase tracking-wide">{label}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">{value}</p>
+                    <p className="text-[10px] sm:text-xs text-foreground-muted uppercase tracking-wide">{label}</p>
                 </div>
             </div>
         </motion.div>
