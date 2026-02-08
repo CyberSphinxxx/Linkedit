@@ -45,17 +45,6 @@ export default function LoginPage() {
         }
     ];
 
-    // Redirect if already logged in
-    useEffect(() => {
-        if (!loading && user) {
-            router.push('/dashboard');
-        }
-    }, [loading, user, router]);
-
-    if (!loading && user) {
-        return null;
-    }
-
     const handleGoogleSignIn = async () => {
         setIsSigningIn(true);
         try {
@@ -76,6 +65,17 @@ export default function LoginPage() {
         }, 3000);
         return () => clearInterval(interval);
     }, []);
+
+    // Redirect if already logged in - MOVED BELOW HOOKS to prevent hook order violation
+    useEffect(() => {
+        if (!loading && user) {
+            router.push('/dashboard');
+        }
+    }, [loading, user, router]);
+
+    if (!loading && user) {
+        return null;
+    }
 
     const containerVariants: Variants = {
         hidden: { opacity: 0 },
