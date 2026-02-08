@@ -128,16 +128,16 @@ export default function PreviewCard({
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 mt-6">
                         <button
                             onClick={handleConfirm}
-                            className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm transition-all hover:bg-primary/90 hover:shadow-[0_0_15px_rgba(var(--primary),0.3)] hover:scale-[1.02] active:scale-[0.98]"
+                            className="flex-1 px-4 py-3 rounded-xl bg-cyan-500 text-black font-bold text-sm transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-cyan-500/20"
                         >
                             Save Link
                         </button>
                         <button
                             onClick={handleDismiss}
-                            className="px-4 py-2.5 rounded-xl border border-surface-elevated text-foreground-muted font-medium text-sm transition-colors hover:border-foreground-muted hover:text-foreground"
+                            className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 text-gray-400 font-medium text-sm transition-colors hover:bg-white/10 hover:text-white"
                         >
                             Dismiss
                         </button>
