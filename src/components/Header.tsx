@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import Image from 'next/image';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, Search, X } from 'lucide-react';
 
 interface HeaderProps {
     searchBar?: React.ReactNode;
@@ -23,9 +23,11 @@ export default function Header({ searchBar, actions, onAddClick }: HeaderProps) 
     const isOnDashboard = pathname === '/dashboard';
     const isLandingPage = pathname === '/';
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const mobileSearchRef = useRef<HTMLDivElement>(null);
 
-    const logoHref = '/dashboard'; // Always simplify navigation to app core, Landing page has its own distinctive feel checking pathname anyway
+    const logoHref = '/dashboard';
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -33,18 +35,18 @@ export default function Header({ searchBar, actions, onAddClick }: HeaderProps) 
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsDropdownOpen(false);
             }
+            if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
+                setIsMobileSearchOpen(false);
+            }
         };
 
-        if (isDropdownOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
+        document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isDropdownOpen]);
+    }, []);
 
     const handleCollectionClick = () => {
-        // Guests can access collections too
         if (!isOnDashboard) router.push('/dashboard');
     };
 
@@ -63,48 +65,75 @@ export default function Header({ searchBar, actions, onAddClick }: HeaderProps) 
         <header className={`${settings.stickyHeader ? 'sticky top-0' : 'relative'} z-50 w-full transition-all duration-300 pointer-events-none`}>
             {/* The Floating Pill Header */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pointer-events-auto">
-                <div className="relative w-full h-16 sm:h-20 rounded-2xl bg-surface/80 backdrop-blur-2xl border border-white/10 shadow-2xl flex items-center justify-between gap-4 px-4 sm:px-6 transition-all duration-300">
+                <div className="relative w-full h-16 sm:h-20 rounded-2xl bg-surface/80 backdrop-blur-2xl border border-white/10 shadow-2xl flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 transition-all duration-300">
 
-
+                    {/* Mobile Search Overlay */}
+                    {isMobileSearchOpen && searchBar && (
+                        <div
+                            ref={mobileSearchRef}
+                            className="absolute inset-0 z-50 bg-surface/95 backdrop-blur-2xl rounded-2xl flex items-center px-4 animate-in fade-in slide-in-from-top-2 duration-200"
+                        >
+                            <div className="flex-1">
+                                {searchBar}
+                            </div>
+                            <button
+                                onClick={() => setIsMobileSearchOpen(false)}
+                                className="ml-2 p-2 text-foreground-muted hover:text-foreground"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    )}
 
                     {/* Logo Section */}
-                    <Link href={logoHref} className="flex items-center gap-3 group shrink-0">
-                        <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-surface-elevated to-surface border border-white/10 group-hover:border-primary/50 group-hover:shadow-[0_0_15px_rgba(68,214,44,0.3)] transition-all duration-300">
-                            <svg className="w-5 h-5 text-primary group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <Link href={logoHref} className={`flex items-center gap-2 group shrink-0 ${isMobileSearchOpen ? 'hidden md:flex' : ''}`}>
+                        <div className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-surface-elevated to-surface border border-white/10 group-hover:border-primary/50 group-hover:shadow-[0_0_15px_rgba(68,214,44,0.3)] transition-all duration-300">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-primary group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                             </svg>
                         </div>
-                        <span className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 hidden sm:inline-block">
+                        <span className="text-lg sm:text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors duration-300 hidden min-[340px]:inline-block">
                             LinkedIT
                         </span>
                     </Link>
 
-                    {/* Spacer to push content right */}
-                    <div className="flex-1" />
+                    {/* Spacer - Desktop only */}
+                    <div className="flex-1 hidden md:block" />
 
-                    {/* Search Bar Slot - Centered & Integrated */}
-                    {searchBar && (
-                        <div className="w-full max-w-sm md:max-w-md mr-2 transition-all duration-300">
-                            {/* The customized styling for the search input should be done in the parent or via global CSS targeting this slot, 
-                                but we ensure the container is centered and spaced. */}
-                            {searchBar}
-                        </div>
+                    {/* Search Bar Slot - Desktop vs Mobile Toggle */}
+                    {searchBar && !isMobileSearchOpen && (
+                        <>
+                            {/* Desktop Search */}
+                            <div className="hidden md:block w-full max-w-sm lg:max-w-md transition-all duration-300">
+                                {searchBar}
+                            </div>
+                            {/* Mobile Search Toggle */}
+                            <button
+                                onClick={() => setIsMobileSearchOpen(true)}
+                                className="md:hidden p-2 text-foreground-muted hover:text-foreground transition-colors ml-auto"
+                            >
+                                <Search className="w-5 h-5" />
+                            </button>
+                        </>
                     )}
 
+                    {!searchBar && <div className="flex-1" />}
+
                     {/* Right Actions */}
-                    <div className="flex items-center gap-3 shrink-0">
-                        {/* Custom Actions - Moved before Add button for better flow */}
+                    <div className={`flex items-center gap-2 sm:gap-3 shrink-0 ${isMobileSearchOpen ? 'hidden md:flex' : ''}`}>
+                        {/* Custom Actions */}
                         {actions && (
                             <div className="flex items-center gap-2">
                                 {actions}
                             </div>
                         )}
 
-                        {/* Add Link Button */}
+                        {/* Add Link Button - Hidden on mobile, use FAB instead */}
                         {onAddClick && (
                             <button
                                 onClick={onAddClick}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-background font-bold text-sm hover:opacity-90 hover:shadow-[0_0_15px_-3px_rgba(68,214,44,0.4)] transition-all active:scale-95"
+                                className="hidden sm:flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-primary text-background font-bold text-sm hover:opacity-90 hover:shadow-[0_0_15px_-3px_rgba(68,214,44,0.4)] transition-all active:scale-95"
+                                title="Add Link"
                             >
                                 <Plus className="w-5 h-5" strokeWidth={2.5} />
                                 <span className="hidden sm:inline">Add Link</span>
