@@ -82,18 +82,20 @@ export default function CollectionSwitcher({ className = '' }: CollectionSwitche
         <div className={`relative ${className}`} ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-surface border border-surface-elevated hover:border-primary/30 text-foreground transition-all group"
+                className={`w-full flex items-center justify-between sm:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-surface border border-surface-elevated hover:border-primary/30 text-foreground transition-all group ${className}`}
             >
-                {selectedCol ? (
-                    <CollectionIcon name={selectedCol.icon} className="w-4 h-4 text-primary" />
-                ) : (
-                    <FolderOpen className="w-4 h-4 text-primary" />
-                )}
+                <div className="flex items-center gap-2.5 min-w-0">
+                    {selectedCol ? (
+                        <CollectionIcon name={selectedCol.icon} className="w-4 h-4 text-primary shrink-0" />
+                    ) : (
+                        <FolderOpen className="w-4 h-4 text-primary shrink-0" />
+                    )}
 
-                <span className="font-medium">
-                    {selectedCol ? selectedCol.name : 'All Collections'}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-foreground-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    <span className="font-medium truncate">
+                        {selectedCol ? selectedCol.name : 'All Collections'}
+                    </span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-foreground-muted transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
