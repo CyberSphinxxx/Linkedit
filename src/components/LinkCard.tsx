@@ -116,25 +116,25 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
                     <div className={`absolute inset-0 bg-black/40 ${hoverOpacityClass}`} />
 
                     {/* Site Badge (Top Left) */}
-                    <div className="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-sm z-10 pointer-events-none">
+                    <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-sm z-10 pointer-events-none">
                         <Image
                             src={faviconSrc}
                             alt=""
-                            width={14}
-                            height={14}
-                            className="rounded-sm"
+                            width={12}
+                            height={12}
+                            className="rounded-sm sm:w-3.5 sm:h-3.5"
                             unoptimized
                             onError={(e) => { e.currentTarget.src = '/favicon.ico'; }}
                         />
-                        <span className="text-[11px] font-medium text-white/90 truncate max-w-[80px]">
+                        <span className="text-[9px] sm:text-[11px] font-medium text-white/90 truncate max-w-[60px] sm:max-w-[80px]">
                             {link.metadata.site_name || hostname}
                         </span>
                     </div>
 
                     {/* Media Badge (Top Right) */}
-                    <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                    <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 pointer-events-none">
                         <span className={`
-                            px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm
+                            px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-wider shadow-sm
                             ${link.media_type === 'article' ? 'bg-primary text-background' : ''}
                             ${link.media_type === 'video' ? 'bg-error text-white' : ''}
                             ${link.media_type === 'image' ? 'bg-accent text-white' : ''}
@@ -210,9 +210,9 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
                 </div>
 
                 {/* === BOTTOM: CONTENT SECTION === */}
-                <div className="flex flex-col p-4 bg-surface border-t border-surface-elevated flex-grow">
+                <div className="flex flex-col p-3 sm:p-4 bg-surface border-t border-surface-elevated flex-grow">
                     {/* Title */}
-                    <h3 className="font-bold text-base text-foreground leading-snug line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                    <h3 className="font-bold text-sm sm:text-base text-foreground leading-snug line-clamp-2 mb-2 group-hover:text-primary transition-colors">
                         {link.metadata.title || 'Untitled Link'}
                     </h3>
 
