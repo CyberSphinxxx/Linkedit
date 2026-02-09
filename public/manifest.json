@@ -1,16 +1,57 @@
 {
-    "name": "LinkedIT",
-    "short_name": "LinkedIT",
-    "description": "Your Second Brain for the Internet",
+    "name": "Linkedit - Intelligent Bookmark Manager",
+    "short_name": "Linkedit",
+    "description": "The intelligent bookmark manager for visual thinkers. Save, organize, and access your links from anywhere.",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#13131a",
-    "theme_color": "#00f0ff",
+    "background_color": "#0a0a0a",
+    "theme_color": "#00E5FF",
+    "orientation": "portrait-primary",
+    "scope": "/",
     "icons": [
         {
             "src": "/favicon.ico",
             "sizes": "64x64 32x32 24x24 16x16",
             "type": "image/x-icon"
+        },
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "192x192 512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "productivity",
+        "utilities",
+        "tools"
+    ],
+    "shortcuts": [
+        {
+            "name": "Add Link",
+            "short_name": "Add",
+            "description": "Add a new link to your collection",
+            "url": "/dashboard?action=add",
+            "icons": [
+                {
+                    "src": "/icons/icon.svg",
+                    "sizes": "192x192 512x512",
+                    "type": "image/svg+xml"
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "View your dashboard",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/icons/icon.svg",
+                    "sizes": "192x192 512x512",
+                    "type": "image/svg+xml"
+                }
+            ]
         }
     ]
 }
