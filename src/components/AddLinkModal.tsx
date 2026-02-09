@@ -287,7 +287,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-elevated">
+                            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-surface-elevated">
                                 <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                                     <span className="p-1.5 rounded-lg bg-surface-elevated text-primary">
                                         <LinkIcon className="w-4 h-4" />
@@ -304,7 +304,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                             </div>
 
                             {/* Content */}
-                            <div className="px-6 py-5 space-y-5">
+                            <div className="px-4 sm:px-6 py-5 space-y-5">
                                 {/* URL Input */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-foreground-muted">Link URL</label>
@@ -317,7 +317,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                             onKeyDown={handleKeyDownInput}
                                             placeholder="https://..."
                                             disabled={isLoading}
-                                            className="w-full px-4 py-3 rounded-xl bg-background border border-surface-elevated focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-foreground-muted/50 outline-none transition-all disabled:opacity-50"
+                                            className="w-full px-4 py-3 rounded-xl bg-background border border-surface-elevated focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-foreground-muted/50 outline-none transition-all disabled:opacity-50 text-base sm:text-sm"
                                         />
                                         {isLoading && (
                                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -376,7 +376,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                             value={customImageUrl}
                                             onChange={(e) => setCustomImageUrl(e.target.value)}
                                             placeholder="https://example.com/image.jpg"
-                                            className="w-full px-4 py-3 rounded-xl bg-background border border-surface-elevated focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-foreground-muted/50 outline-none transition-all text-sm"
+                                            className="w-full px-4 py-3 rounded-xl bg-background border border-surface-elevated focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-foreground-muted/50 outline-none transition-all text-base sm:text-sm"
                                         />
                                     </div>
                                 )}
@@ -486,7 +486,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                                     onChange={(e) => setNote(e.target.value)}
                                                     placeholder="Why are you saving this? (optional)"
                                                     rows={2}
-                                                    className="w-full mt-2 px-4 py-3 rounded-xl bg-background border border-surface-elevated focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-foreground-muted/50 outline-none transition-all resize-none text-sm"
+                                                    className="w-full mt-2 px-4 py-3 rounded-xl bg-background border border-surface-elevated focus:border-primary focus:ring-1 focus:ring-primary text-foreground placeholder:text-foreground-muted/50 outline-none transition-all resize-none text-base sm:text-sm"
                                                 />
                                             </motion.div>
                                         )}
@@ -519,15 +519,17 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                             </div>
 
                             {/* Footer */}
-                            <div className="px-6 py-4 border-t border-surface-elevated bg-surface-elevated/30 flex items-center justify-between gap-4">
+                            <div className="px-4 sm:px-6 py-4 border-t border-surface-elevated bg-surface-elevated/30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                                 {/* Collection Dropdown */}
-                                <div className="relative" ref={collectionDropdownRef}>
+                                <div className="relative w-full sm:w-auto" ref={collectionDropdownRef}>
                                     <button
                                         onClick={() => setIsCollectionDropdownOpen(!isCollectionDropdownOpen)}
-                                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface border border-surface-elevated hover:border-primary/30 text-sm text-foreground transition-colors"
+                                        className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 px-3 py-2 rounded-lg bg-surface border border-surface-elevated hover:border-primary/30 text-sm text-foreground transition-colors"
                                     >
-                                        <CollectionIcon name={selectedCollectionData?.icon || 'inbox'} className="w-4 h-4 text-foreground-muted" />
-                                        <span>{selectedCollectionData?.name || 'Uncategorized'}</span>
+                                        <div className="flex items-center gap-2">
+                                            <CollectionIcon name={selectedCollectionData?.icon || 'inbox'} className="w-4 h-4 text-foreground-muted" />
+                                            <span>{selectedCollectionData?.name || 'Uncategorized'}</span>
+                                        </div>
                                         <ChevronDown className="w-4 h-4 text-foreground-muted" />
                                     </button>
 
@@ -537,7 +539,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -5 }}
-                                                className="absolute bottom-full mb-2 left-0 w-72 bg-surface border border-surface-elevated rounded-xl shadow-xl overflow-hidden z-10"
+                                                className="absolute bottom-full mb-2 left-0 w-full sm:w-72 max-w-[calc(100vw-48px)] bg-surface border border-surface-elevated rounded-xl shadow-xl overflow-hidden z-10"
                                             >
                                                 <div className="max-h-48 overflow-y-auto py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                                     {collections.map(col => (
@@ -620,17 +622,17 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2">
                                     <button
                                         onClick={() => !isLoading && onClose()}
-                                        className="px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-elevated rounded-lg transition-colors"
+                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-elevated rounded-lg transition-colors"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         onClick={() => handleSave(false)}
                                         disabled={(!preview && !customImageUrl) || isLoading}
-                                        className="px-5 py-2 text-sm font-medium bg-primary text-background rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center gap-2"
+                                        className="w-full sm:w-auto px-5 py-2 text-sm font-medium bg-primary text-background rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center gap-2"
                                     >
                                         <Check className="w-4 h-4" />
                                         Save Link
