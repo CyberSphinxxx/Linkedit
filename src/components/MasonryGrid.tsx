@@ -19,7 +19,8 @@ export default function MasonryGrid({ children }: MasonryGridProps) {
             if (width >= 1280) setColumns(Math.min(maxColumns, 4));      // xl
             else if (width >= 1024) setColumns(Math.min(maxColumns, 3)); // lg
             else if (width >= 640) setColumns(Math.min(maxColumns, 2));  // sm
-            else setColumns(1);                                          // mobile always 1
+            else if (width >= 375) setColumns(Math.min(maxColumns, 2));   // mobile-large (2 columns)
+            else setColumns(1);                                          // very small mobile (1 column)
         };
 
         // Debounce resize handler to prevent excessive re-renders
