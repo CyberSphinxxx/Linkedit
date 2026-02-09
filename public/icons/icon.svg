@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#27272a" /> <!-- surface-elevated approx covering zinc-800 -->
+      <stop offset="100%" stop-color="#09090b" /> <!-- surface approx covering zinc-950 -->
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="512" height="512" rx="128" fill="url(#bg)" />
+  
+  <rect x="2" y="2" width="508" height="508" rx="126" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="none" />
+  
+  <g transform="translate(128, 128) scale(10.66)" filter="url(#glow)">
+    <path stroke="#00E5FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+  </g>
+</svg>
