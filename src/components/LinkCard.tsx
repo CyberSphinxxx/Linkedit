@@ -9,7 +9,7 @@ import { isDirectImage, getHostname, getFaviconUrl } from '@/lib/utils';
 import { useLinks } from '@/context/LinksContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useToast } from '@/components/Toast';
-import { Info, ExternalLink, Heart, Edit2, Trash2, Play } from 'lucide-react';
+import { Info, ExternalLink, Heart, Edit2, Trash2, Play, MoreVertical, X } from 'lucide-react';
 
 // Lazy load heavy modals
 const YouTubeModal = dynamic(() => import('./YouTubeModal'), { ssr: false });
@@ -28,7 +28,7 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [showMenu, setShowMenu] = useState(false);
+    const [showMenu, setShowMenu] = useState(false); // Used for mobile toggle
 
     const { removeLink, toggleFavorite } = useLinks();
     const { settings } = useSettings();
@@ -83,8 +83,8 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
     // Reduce motion: remove transition classes if enabled
     const transitionClass = settings.reduceMotion ? '' : 'transition-all duration-300';
     const hoverScaleClass = settings.reduceMotion ? '' : 'group-hover:scale-105';
-    const hoverOpacityClass = settings.reduceMotion ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100 transition-opacity duration-300';
-    const hoverTranslateClass = settings.reduceMotion ? 'translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0';
+    const hoverOpacityClass = settings.reduceMotion ? `opacity-0 group-hover:opacity-100 ${showMenu ? 'opacity-100' : ''}` : `opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${showMenu ? 'opacity-100' : ''}`;
+    const hoverTranslateClass = settings.reduceMotion ? `translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 ${showMenu ? 'translate-y-0 opacity-100' : ''}` : `opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 ${showMenu ? 'translate-y-0 opacity-100' : ''}`;
 
     return (
         <>
@@ -115,24 +115,9 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
                     {/* Hover Overlay (Darken) */}
                     <div className={`absolute inset-0 bg-black/40 ${hoverOpacityClass}`} />
 
-                    {/* Site Badge (Top Left) */}
-                    <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-sm z-10 pointer-events-none">
-                        <Image
-                            src={faviconSrc}
-                            alt=""
-                            width={12}
-                            height={12}
-                            className="rounded-sm sm:w-3.5 sm:h-3.5"
-                            unoptimized
-                            onError={(e) => { e.currentTarget.src = '/favicon.ico'; }}
-                        />
-                        <span className="text-[9px] sm:text-[11px] font-medium text-white/90 truncate max-w-[60px] sm:max-w-[80px]">
-                            {link.metadata.site_name || hostname}
-                        </span>
-                    </div>
 
                     {/* Media Badge (Top Right) */}
-                    <div className="absolute top-2 sm:top-3 right-2 sm:right-3 z-10 pointer-events-none">
+                    <div className="absolute top-2 sm:top-3 right-12 sm:right-3 z-10 pointer-events-none transition-all">
                         <span className={`
                             px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-wider shadow-sm
                             ${link.media_type === 'article' ? 'bg-primary text-background' : ''}
@@ -142,6 +127,17 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
                             {link.media_type === 'article' ? 'link' : link.media_type}
                         </span>
                     </div>
+
+                    {/* === Mobile Action Toggle === */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMenu(!showMenu);
+                        }}
+                        className={`absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white flex items-center justify-center z-30 sm:hidden transition-transform ${showMenu ? 'rotate-90 bg-primary border-primary text-background' : ''}`}
+                    >
+                        {showMenu ? <X className="w-4 h-4" /> : <MoreVertical className="w-4 h-4" />}
+                    </button>
 
                     {/* === HOVER ACTIONS (Bottom Row) === */}
                     <div className={`absolute inset-x-0 bottom-0 p-3 flex items-center justify-between gap-2 z-20 ${hoverTranslateClass}`} onClick={(e) => e.stopPropagation()}>
@@ -211,6 +207,23 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
 
                 {/* === BOTTOM: CONTENT SECTION === */}
                 <div className="flex flex-col p-3 sm:p-4 bg-surface border-t border-surface-elevated flex-grow">
+                    {/* Site Info (Moved from Image) */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <div className="relative w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm overflow-hidden shrink-0">
+                            <Image
+                                src={faviconSrc}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                unoptimized
+                                onError={(e) => { e.currentTarget.src = '/favicon.ico'; }}
+                            />
+                        </div>
+                        <span className="text-[10px] sm:text-xs text-foreground-muted font-medium truncate">
+                            {link.metadata.site_name || hostname}
+                        </span>
+                    </div>
+
                     {/* Title */}
                     <h3 className="font-bold text-sm sm:text-base text-foreground leading-snug line-clamp-2 mb-2 group-hover:text-primary transition-colors">
                         {link.metadata.title || 'Untitled Link'}
