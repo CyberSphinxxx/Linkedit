@@ -55,6 +55,26 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.linkedit.online",
   },
+  themeColor: "#00E5FF",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LinkedIT",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icons/icon.svg",
+  },
   robots: {
     index: true,
     follow: true,
