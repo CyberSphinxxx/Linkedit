@@ -3,12 +3,25 @@
  */
 
 /**
+ * Normalize URL to include protocol
+ */
+export function normalizeUrl(url: string): string {
+    if (!url) return url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return `https://${url}`;
+    }
+    return url;
+}
+
+/**
  * Check if a string is a valid URL
  */
 export function isValidUrl(string: string): boolean {
+    if (!string) return false;
     try {
-        new URL(string);
-        return true;
+        const urlToParse = normalizeUrl(string);
+        const urlObj = new URL(urlToParse);
+        return ['http:', 'https:'].includes(urlObj.protocol);
     } catch {
         return false;
     }

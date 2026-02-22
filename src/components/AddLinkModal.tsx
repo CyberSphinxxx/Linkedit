@@ -7,7 +7,7 @@ import { PreviewData } from '@/lib/scraper';
 import { Link as LinkType } from '@/types/link';
 import Image from 'next/image';
 import TagInput from './TagInput';
-import { isValidUrl } from '@/lib/utils';
+import { isValidUrl, normalizeUrl } from '@/lib/utils';
 import { useSettings } from '@/context/SettingsContext';
 import { useCollections } from '@/context/CollectionsContext';
 import { useLinks } from '@/context/LinksContext';
@@ -136,11 +136,12 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
     };
 
     const handleSave = useCallback((andAddAnother = false) => {
-        if (preview || customImageUrl) {
+        const normalizedInputUrl = url ? normalizeUrl(url) : '';
+        if (preview || customImageUrl || (normalizedInputUrl && isValidUrl(normalizedInputUrl))) {
             const newLink: Omit<LinkType, '_id'> = {
-                original_url: preview?.url || url,
+                original_url: preview?.url || normalizedInputUrl,
                 metadata: {
-                    title: preview?.title || 'Untitled Link',
+                    title: preview?.title || (normalizedInputUrl ? new URL(normalizedInputUrl).hostname : 'Untitled Link'),
                     description: preview?.description || '',
                     thumbnail_image: customImageUrl || preview?.image || '',
                     site_name: preview?.siteName || new URL(url).hostname,
@@ -190,10 +191,11 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
         setError(null);
 
         try {
+            const normalizedUrl = normalizeUrl(inputUrl);
             const response = await fetch('/api/preview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: inputUrl }),
+                body: JSON.stringify({ url: normalizedUrl }),
             });
 
             if (!response.ok) throw new Error('Failed to fetch preview');
@@ -413,7 +415,8 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                                             fill
                                                             className="object-cover"
                                                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                                            unoptimized={(customImageUrl || preview?.image || '').startsWith('/api/proxy-image')}
+                                                            unoptimized={(customImageUrl || preview?.image || '').startsWith('/api/proxy-image') || (customImageUrl || preview?.image || '').includes('fbcdn.net')}
+                                                            referrerPolicy="no-referrer"
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center bg-surface-elevated">
@@ -631,7 +634,8 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                     </button>
                                     <button
                                         onClick={() => handleSave(false)}
-                                        disabled={(!preview && !customImageUrl) || isLoading}
+                                        disabled={(!preview && !customImageUrl && (!url || !isValidUrl(normalizeUrl(url)))) || isLoading}
+                                        title={isLoading ? "Wait for preview to load" : (!preview && !customImageUrl && (!url || !isValidUrl(normalizeUrl(url)))) ? "Enter a valid URL to save" : ""}
                                         className="w-full sm:w-auto px-5 py-2 text-sm font-medium bg-primary text-background rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center gap-2"
                                     >
                                         <Check className="w-4 h-4" />
