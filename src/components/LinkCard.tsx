@@ -73,9 +73,15 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
         }
     };
 
-    const thumbnailSrc = imageError
+    let rawThumbnail = link.metadata.thumbnail_image || '';
+    // Unpack old proxy URLs so legacy saves bypass the proxy too
+    if (rawThumbnail.startsWith('/api/proxy-image?url=')) {
+        rawThumbnail = decodeURIComponent(rawThumbnail.split('url=')[1] || '');
+    }
+
+    const thumbnailSrc = imageError || !rawThumbnail
         ? 'https://placehold.co/600x400/13131a/00f0ff?text=No+Image'
-        : link.metadata.thumbnail_image || 'https://placehold.co/600x400/13131a/00f0ff?text=No+Image';
+        : rawThumbnail;
 
     const faviconSrc = link.metadata.favicon || getFaviconUrl(link.original_url);
 
@@ -109,7 +115,8 @@ const LinkCard = memo(function LinkCard({ link }: LinkCardProps) {
                         className={`object-cover ${settings.reduceMotion ? '' : 'transition-transform duration-500'} ${hoverScaleClass}`}
                         onError={() => setImageError(true)}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        unoptimized={thumbnailSrc.startsWith('/api/proxy-image')}
+                        unoptimized={thumbnailSrc.startsWith('/api/proxy-image') || thumbnailSrc.includes('fbcdn.net') || thumbnailSrc.includes('fbsbx.com')}
+                        referrerPolicy="no-referrer"
                     />
 
                     {/* Hover Overlay (Darken) */}

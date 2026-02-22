@@ -24,6 +24,12 @@ export default function LinkListItem({ link }: LinkListItemProps) {
     const hostname = getHostname(link.original_url);
     const faviconSrc = link.metadata.favicon || getFaviconUrl(link.original_url);
 
+    let displayThumbnail = link.metadata.thumbnail_image || '';
+    // Unpack old proxy URLs so legacy saves bypass the proxy too
+    if (displayThumbnail.startsWith('/api/proxy-image?url=')) {
+        displayThumbnail = decodeURIComponent(displayThumbnail.split('url=')[1] || '');
+    }
+
     const handleClick = () => {
         const target = settings.openLinksInNewTab ? '_blank' : '_self';
         if (youtubeId) {
@@ -72,11 +78,12 @@ export default function LinkListItem({ link }: LinkListItemProps) {
                 {/* Thumbnail */}
                 <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-surface-elevated flex-shrink-0">
                     <Image
-                        src={link.metadata.thumbnail_image || 'https://placehold.co/64x48/13131a/00f0ff?text=No'}
+                        src={displayThumbnail || 'https://placehold.co/64x48/13131a/00f0ff?text=No'}
                         alt=""
                         fill
                         className="object-cover"
-                        unoptimized
+                        unoptimized={displayThumbnail.startsWith('/api/proxy-image') || displayThumbnail.includes('fbcdn.net') || displayThumbnail.includes('fbsbx.com') || !displayThumbnail}
+                        referrerPolicy="no-referrer"
                     />
                     {youtubeId && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/30">

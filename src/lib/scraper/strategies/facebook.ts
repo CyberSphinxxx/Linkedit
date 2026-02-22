@@ -81,12 +81,9 @@ export function processFacebookMetadata(
     const resolvedImage = image ? resolveUrl(url, image) : DEFAULT_PLACEHOLDER;
     const favicon = tags['favicon'] ? resolveUrl(url, tags['favicon']) : `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
 
-    // REWRITE IMAGE URL TO USE PROXY for Facebook/Instagram
-    // Because Facebook blocks direct image loading without bot UA
     let finalImage = resolvedImage;
-    if (resolvedImage && resolvedImage !== DEFAULT_PLACEHOLDER) {
-        finalImage = `/api/proxy-image?url=${encodeURIComponent(resolvedImage)}`;
-    }
+    // Removed proxy logic, instead we will use referrerPolicy="no-referrer" on the frontend
+    // to bypass FB CDN restrictions. Facebook allows direct hotlinking if referer is empty.
 
     return {
         url: resolvedUrl,

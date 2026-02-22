@@ -11,19 +11,33 @@ export async function GET(request: NextRequest) {
 
     try {
         // Validate URL (optional security check to prevent open proxy)
-        // For now, allow all, but ideally limit to known domains
         const allowedDomains = ['facebook.com', 'fbcdn.net', 'instagram.com', 'cdninstagram.com', 'fbsbx.com'];
         const urlObj = new URL(url);
+
+        // For Facebook/Instagram CDNs, the proxy is no longer needed since the client
+        // uses referrerPolicy="no-referrer", so we just redirect them to the original URL.
+        if (urlObj.hostname.includes('fbcdn.net') || urlObj.hostname.includes('scontent')) {
+            return NextResponse.redirect(urlObj.toString(), 302);
+        }
+
         if (!allowedDomains.some(domain => urlObj.hostname.includes(domain))) {
             // return new NextResponse('Forbidden Domain', { status: 403 }); 
             // Actually, let's keep it open for now or add more domains as needed
         }
 
-        // Use Googlebot UA or similar that worked in debug script
+        // Use a standard browser UA and additional headers to avoid 403 errors from CDNs
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Referer': 'https://www.facebook.com/',
+                'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'image',
+                'sec-fetch-mode': 'no-cors',
+                'sec-fetch-site': 'cross-site',
             },
         });
 
