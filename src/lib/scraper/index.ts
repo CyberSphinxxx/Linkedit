@@ -35,18 +35,39 @@ export async function fetchMetadata(url: string): Promise<PreviewData> {
         const isFacebook = isFacebookUrl(url);
         const userAgent = getFacebookUserAgent(isFacebook);
 
-        const response = await fetch(url, {
-            signal: controller.signal,
-            headers: {
-                'User-Agent': userAgent,
-                'Accept': 'text/html,application/xhtml+xml',
-            },
-        });
-
-        clearTimeout(timeout);
+        let response;
+        try {
+            response = await fetch(url, {
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': userAgent,
+                    'Accept': 'text/html,application/xhtml+xml',
+                },
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (
+            !contentType.includes('text/html') && 
+            !contentType.includes('application/xhtml+xml') && 
+            !contentType.includes('text/xml')
+        ) {
+            // Not a web page, abort early before downloading to prevent OOM
+            return {
+                url: response.url,
+                title: hostname,
+                description: '',
+                image: DEFAULT_PLACEHOLDER,
+                siteName: hostname,
+                favicon: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
+                mediaType: detectMediaType(response.url),
+            };
         }
 
         const resolvedUrl = response.url;

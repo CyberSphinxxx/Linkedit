@@ -49,6 +49,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
     const [customImageUrl, setCustomImageUrl] = useState('');
     const [dominantColor, setDominantColor] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Ensure we're mounted on client before using portal
     useEffect(() => {
@@ -74,6 +75,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
             setIsCreatingCollection(false);
             setNewCollectionName('');
             setNewCollectionIcon('folder');
+            abortControllerRef.current?.abort();
         }
     }, [isOpen]);
 
@@ -132,10 +134,12 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
         setIsNoteExpanded(false);
         setDominantColor(null);
         setCustomImageUrl('');
+        abortControllerRef.current?.abort();
         // Keep collection selection for batch adding
     };
 
     const handleSave = useCallback((andAddAnother = false) => {
+        if (isLoading) return;
         const normalizedInputUrl = url ? normalizeUrl(url) : '';
         if (preview || customImageUrl || (normalizedInputUrl && isValidUrl(normalizedInputUrl))) {
             const newLink: Omit<LinkType, '_id'> = {
@@ -190,12 +194,19 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
         setIsLoading(true);
         setError(null);
 
+        // Abort any ongoing fetch to prevent race conditions
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
         try {
             const normalizedUrl = normalizeUrl(inputUrl);
             const response = await fetch('/api/preview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: normalizedUrl }),
+                signal: abortControllerRef.current.signal,
             });
 
             if (!response.ok) throw new Error('Failed to fetch preview');
@@ -207,6 +218,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
 
             // Removed auto-tagging per user request
         } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') return;
             setError(err instanceof Error ? err.message : 'Failed to fetch link preview');
         } finally {
             setIsLoading(false);
@@ -275,7 +287,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
                             className="fixed inset-0 bg-background/60 backdrop-blur-md transition-opacity"
-                            onClick={() => !isLoading && onClose()}
+                            onClick={() => onClose()}
                         />
 
                         {/* Modal Panel with Dynamic Glow */}
@@ -298,7 +310,6 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                 </h2>
                                 <button
                                     onClick={onClose}
-                                    disabled={isLoading}
                                     className="p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-elevated transition-colors disabled:opacity-50"
                                 >
                                     <X className="w-5 h-5" />
@@ -627,7 +638,7 @@ export default function AddLinkModal({ isOpen, onClose, onSave }: AddLinkModalPr
                                 {/* Action Buttons */}
                                 <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2">
                                     <button
-                                        onClick={() => !isLoading && onClose()}
+                                        onClick={() => onClose()}
                                         className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground hover:bg-surface-elevated rounded-lg transition-colors"
                                     >
                                         Cancel

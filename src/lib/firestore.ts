@@ -148,23 +148,26 @@ export async function deleteCollection(userId: string, collectionId: string): Pr
 
 // Delete all user data (links and collections)
 export async function deleteAllUserData(userId: string): Promise<void> {
-    const batch = writeBatch(db);
+    const CHUNK_SIZE = 450; // Safety margin under the 500 limit
 
-    // 1. Get all links
+    // 1. Get all documents
     const linksRef = getUserLinksRef(userId);
     const linksSnapshot = await getDocs(linksRef);
-    linksSnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
-
-    // 2. Get all collections
     const colsRef = getUserCollectionsRef(userId);
     const colsSnapshot = await getDocs(colsRef);
-    colsSnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-    });
 
-    // Commit batch
-    await batch.commit();
+    const allDocs = [...linksSnapshot.docs, ...colsSnapshot.docs];
+
+    // 2. Chunk and batch delete
+    for (let i = 0; i < allDocs.length; i += CHUNK_SIZE) {
+        const batch = writeBatch(db);
+        const chunk = allDocs.slice(i, i + CHUNK_SIZE);
+
+        chunk.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+    }
 }
 

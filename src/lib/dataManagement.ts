@@ -230,7 +230,11 @@ export function findDuplicateLinks(links: LinkType[]): { original: LinkType; dup
         if (group.length > 1) {
             // Keep the oldest one as original
             const sorted = [...group].sort(
-                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                (a, b) => {
+                    const timeA = new Date(a.created_at).getTime() || 0;
+                    const timeB = new Date(b.created_at).getTime() || 0;
+                    return timeA - timeB;
+                }
             );
             duplicates.push({
                 original: sorted[0],

@@ -211,8 +211,20 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
             Object.entries(updates).filter(([_, v]) => v !== undefined)
         );
 
-        await firestoreService.updateCollection(user.uid, id, sanitizedUpdates);
-    }, [user]);
+        const oldCollectionState = collections.find((c) => c._id === id);
+
+        try {
+            await firestoreService.updateCollection(user.uid, id, sanitizedUpdates);
+        } catch (error) {
+            console.error('Failed to update collection:', error);
+            if (oldCollectionState) {
+                setCollections((prev) =>
+                    prev.map((c) => (c._id === id ? oldCollectionState : c))
+                );
+            }
+            throw error;
+        }
+    }, [user, collections]);
 
     // Cleanup helper for migration - defined outside or inline
     const removeUndefined = (obj: any) => {
@@ -226,11 +238,21 @@ export function CollectionsProvider({ children }: { children: ReactNode }) {
         if (!user) return;
         if (id === 'default_0') return; // Protect default
 
+        const collectionToRestore = collections.find((c) => c._id === id);
+
         // Optimistic update
         setCollections((prev) => prev.filter((c) => c._id !== id));
 
-        await firestoreService.deleteCollection(user.uid, id);
-    }, [user]);
+        try {
+            await firestoreService.deleteCollection(user.uid, id);
+        } catch (error) {
+            console.error('Failed to delete collection:', error);
+            if (collectionToRestore) {
+                setCollections((prev) => [...prev, collectionToRestore]);
+            }
+            throw error;
+        }
+    }, [user, collections]);
 
     // Get a collection by ID
     const getCollection = useCallback((id: string) => {

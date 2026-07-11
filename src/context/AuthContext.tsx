@@ -9,6 +9,7 @@ import {
     GoogleAuthProvider,
     browserLocalPersistence,
     setPersistence,
+    inMemoryPersistence,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -31,7 +32,12 @@ googleProvider.setCustomParameters({
 let persistenceSet = false;
 const ensurePersistence = async () => {
     if (!persistenceSet) {
-        await setPersistence(auth, browserLocalPersistence);
+        try {
+            await setPersistence(auth, browserLocalPersistence);
+        } catch (err) {
+            console.warn('Third-party cookies may be blocked. Falling back to in-memory persistence.', err);
+            await setPersistence(auth, inMemoryPersistence);
+        }
         persistenceSet = true;
     }
 };
